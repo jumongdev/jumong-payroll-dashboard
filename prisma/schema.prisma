@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String           @id @default(uuid())
+  employeeId  String           @unique
+  fullName    String
+  email       String           @unique
+  password    String
+  phone       String?
+  position    String?
+  department  String?
+  rate        Float            @default(0)
+  joinDate    DateTime         @default(now())
+  role        String           @default("employee")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  salaries    Salary[]
+  attendances Attendance[]
+  leaveRecords LeaveRecord[]
+  payslips    Payslip[]
+
+  @@map("users")
+}
+
+model Salary {
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  basicSalary       Float     @map("basic_salary")
+  housingAllowance  Float     @default(0) @map("housing_allowance")
+  transportAllowance Float    @default(0) @map("transport_allowance")
+  otherAllowances   Float     @default(0) @map("other_allowances")
+  deductions        Float     @default(0)
+  tax               Float     @default(0)
+  netSalary         Float     @map("net_salary")
+  month             String
+  year              Int
+  paymentDate       DateTime? @map("payment_date")
+  status            String    @default("pending")
+  notes             String?
+  createdAt         DateTime  @default(now()) @map("created_at")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payslips          Payslip[]
+
+  @@map("salaries")
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  date      DateTime
+  checkIn   DateTime? @map("check_in")
+  checkOut  DateTime? @map("check_out")
+  status    String   @default("present")
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("attendance")
+}
+
+model LeaveRecord {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  leaveType  String    @map("leave_type")
+  startDate  DateTime  @map("start_date")
+  endDate    DateTime  @map("end_date")
+  reason     String?
+  status     String    @default("pending")
+  approvedBy String?   @map("approved_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("leave_records")
+}
+
+model Payslip {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  salaryId  String   @map("salary_id")
+  issuedAt  DateTime @default(now()) @map("issued_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  salary    Salary   @relation(fields: [salaryId], references: [id], onDelete: Cascade)
+
+  @@map("payslips")
+}
