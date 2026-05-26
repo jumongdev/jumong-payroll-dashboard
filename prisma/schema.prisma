@@ -8,58 +8,84 @@ datasource db {
 }
 
 model User {
-  id          String           @id @default(uuid())
-  employeeId  String           @unique
-  fullName    String
-  email       String           @unique
-  password    String
-  phone       String?
-  position    String?
-  department  String?
-  rate        Float            @default(0)
-  joinDate    DateTime         @default(now())
-  role        String           @default("employee")
-  createdAt   DateTime         @default(now()) @map("created_at")
-  salaries    Salary[]
-  attendances Attendance[]
-  leaveRecords LeaveRecord[]
-  payslips    Payslip[]
+  id               String           @id @default(uuid())
+  employeeId       String           @unique
+  fullName         String
+  email            String           @unique
+  password         String
+  profileImage     String?          @map("profile_image")
+  address          String?
+  mobile           String?
+  birthDate        DateTime?        @map("birth_date")
+  sssNumber        String?          @map("sss_number")
+  pagibigNumber    String?          @map("pagibig_number")
+  philhealthNumber String?          @map("philhealth_number")
+  gender           String?
+  designation      String?
+  rate             Float            @default(0)
+  joinDate         DateTime         @default(now())
+  role             String           @default("employee")
+  lastLoginAt      DateTime?        @map("last_login_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  salaries         Salary[]
+  attendances      Attendance[]
+  leaveRecords     LeaveRecord[]
+  payslips         Payslip[]
+  schedules        Schedule[]
+  debts            EmployeeDebt[]
+  payrollEntries   PayrollEntry[]
+  documents        EmployeeDocument[]
 
   @@map("users")
 }
 
 model Salary {
-  id                String    @id @default(uuid())
-  userId            String    @map("user_id")
-  basicSalary       Float     @map("basic_salary")
-  housingAllowance  Float     @default(0) @map("housing_allowance")
-  transportAllowance Float    @default(0) @map("transport_allowance")
-  otherAllowances   Float     @default(0) @map("other_allowances")
-  deductions        Float     @default(0)
-  tax               Float     @default(0)
-  netSalary         Float     @map("net_salary")
-  month             String
-  year              Int
-  paymentDate       DateTime? @map("payment_date")
-  status            String    @default("pending")
-  notes             String?
-  createdAt         DateTime  @default(now()) @map("created_at")
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  payslips          Payslip[]
+  id                    String    @id @default(uuid())
+  userId                String    @map("user_id")
+  basicSalary           Float     @map("basic_salary")
+  housingAllowance      Float     @default(0) @map("housing_allowance")
+  transportAllowance    Float     @default(0) @map("transport_allowance")
+  otherAllowances       Float     @default(0) @map("other_allowances")
+  overtimePay           Float     @default(0) @map("overtime_pay")
+  holidayPay            Float     @default(0) @map("holiday_pay")
+  thirteenthMonthPay    Float     @default(0) @map("thirteenth_month_pay")
+  grossPay              Float     @default(0) @map("gross_pay")
+  sssContribution       Float     @default(0) @map("sss_contribution")
+  philhealthContribution Float    @default(0) @map("philhealth_contribution")
+  pagibigContribution   Float     @default(0) @map("pagibig_contribution")
+  withholdingTax        Float     @default(0) @map("withholding_tax")
+  deductions            Float     @default(0)
+  tax                   Float     @default(0)
+  netSalary             Float     @map("net_salary")
+  netPay                Float     @default(0) @map("net_pay")
+  month                 String
+  year                  Int
+  paymentDate           DateTime? @map("payment_date")
+  status                String    @default("pending")
+  notes                 String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payslips              Payslip[]
 
   @@map("salaries")
 }
 
 model Attendance {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  date      DateTime
-  checkIn   DateTime? @map("check_in")
-  checkOut  DateTime? @map("check_out")
-  status    String   @default("present")
-  notes     String?
-  createdAt DateTime @default(now()) @map("created_at")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  date         DateTime
+  checkIn      DateTime? @map("check_in")
+  checkInPhoto String?   @map("check_in_photo")
+  checkInLat   Float?    @map("check_in_lat")
+  checkInLng   Float?    @map("check_in_lng")
+  checkOut     DateTime? @map("check_out")
+  checkOutPhoto String?  @map("check_out_photo")
+  checkOutLat   Float?   @map("check_out_lat")
+  checkOutLng   Float?   @map("check_out_lng")
+  status       String    @default("present")
+  notes        String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
   @@map("attendance")
@@ -89,4 +115,109 @@ model Payslip {
   salary    Salary   @relation(fields: [salaryId], references: [id], onDelete: Cascade)
 
   @@map("payslips")
+}
+
+model Company {
+  id        String     @id @default(uuid())
+  name      String
+  address   String?
+  latitude  Float?
+  longitude Float?
+  qrCode    String?    @map("qr_code")
+  createdAt DateTime   @default(now()) @map("created_at")
+  schedules Schedule[]
+  shifts    Shift[]
+
+  @@map("companies")
+}
+
+model Shift {
+  id        String     @id @default(uuid())
+  companyId String     @map("company_id")
+  name      String
+  startTime String     @map("start_time")
+  endTime   String     @map("end_time")
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  schedules Schedule[]
+
+  @@map("shifts")
+}
+
+model Schedule {
+  id        String   @id @default(uuid())
+  date      DateTime
+  userId    String   @map("user_id")
+  companyId String   @map("company_id")
+  shiftId   String?  @map("shift_id")
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  shift     Shift?   @relation(fields: [shiftId], references: [id])
+
+  @@unique([userId, date])
+  @@map("schedules")
+}
+
+model EmployeeDebt {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  amount      Float
+  remaining   Float    @default(0)
+  type        String   // cash_advance, damage, store_negative
+  description String?
+  date        DateTime @default(now())
+  deducted    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("employee_debts")
+}
+
+model PayrollPeriod {
+  id        String          @id @default(uuid())
+  weekStart DateTime        @map("week_start")
+  weekEnd   DateTime        @map("week_end")
+  status    String          @default("open") // open, paid
+  createdAt DateTime        @default(now()) @map("created_at")
+  entries   PayrollEntry[]
+
+  @@map("payroll_periods")
+}
+
+model PayrollEntry {
+  id              String        @id @default(uuid())
+  payrollPeriodId String        @map("payroll_period_id")
+  userId          String        @map("user_id")
+  totalHours      Float         @default(0) @map("total_hours")
+  rate            Float         @default(0)
+  grossPay        Float         @default(0) @map("gross_pay")
+  deductions      Float         @default(0)
+  netPay          Float         @default(0) @map("net_pay")
+  status          String        @default("pending") // pending, paid
+  paidAt          DateTime?     @map("paid_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  payrollPeriod   PayrollPeriod @relation(fields: [payrollPeriodId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payroll_entries")
+}
+
+model Advisory {
+  id        String   @id @default(uuid())
+  message   String   @default("")
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("advisory")
+}
+
+model EmployeeDocument {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  file      String   // base64 data
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("employee_documents")
 }

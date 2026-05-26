@@ -12,21 +12,35 @@ import {
   LogOut,
   Menu,
   X,
+  User,
+  Building,
+  ClipboardList,
 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
-const links = [
+const adminLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/employees", label: "Employees", icon: Users },
-  { href: "/dashboard/salaries", label: "Salaries", icon: DollarSign },
+  { href: "/dashboard/companies", label: "Companies", icon: Building },
+  { href: "/dashboard/schedules", label: "Schedule", icon: ClipboardList },
+  { href: "/dashboard/payroll", label: "Payroll", icon: DollarSign },
+  { href: "/dashboard/salaries", label: "Salaries", icon: FileText },
   { href: "/dashboard/attendance", label: "Attendance", icon: Clock },
-  { href: "/dashboard/payslips", label: "Payslips", icon: FileText },
+]
+
+const employeeLinks = [
+  { href: "/dashboard/employee", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/account", label: "My Account", icon: User },
+  { href: "/dashboard/salaries", label: "My Salary", icon: DollarSign },
+  { href: "/dashboard/payslips", label: "My Payslip", icon: FileText },
 ]
 
 export default function Sidebar({ user }: { user?: { name?: string | null; email?: string | null; role?: string } }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const isAdmin = user?.role === "admin"
+  const links = isAdmin ? adminLinks : employeeLinks
 
   return (
     <>
@@ -44,8 +58,10 @@ export default function Sidebar({ user }: { user?: { name?: string | null; email
         )}
       >
         <div className="p-6 border-b">
-          <h1 className="text-xl font-bold text-emerald-600">Jumong</h1>
-          <p className="text-sm text-zinc-500">Payroll Dashboard</p>
+          <div className="flex items-center gap-2">
+            <img src="/logo.svg" alt="JumongDev Payroll" className="h-12 w-auto" />
+          </div>
+          <p className="text-sm text-zinc-500 mt-1">PH Payroll System</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -56,7 +72,7 @@ export default function Sidebar({ user }: { user?: { name?: string | null; email
               onClick={() => setOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                pathname === link.href
+                pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(link.href))
                   ? "bg-emerald-50 text-emerald-700"
                   : "text-zinc-600 hover:bg-zinc-100"
               )}
@@ -71,7 +87,7 @@ export default function Sidebar({ user }: { user?: { name?: string | null; email
           <div className="mb-3 px-1">
             <p className="text-sm font-medium text-zinc-900 truncate">{user?.name}</p>
             <p className="text-xs text-zinc-500 truncate">{user?.email}</p>
-            {user?.role === "admin" && (
+            {isAdmin && (
               <span className="inline-block mt-1 text-xs font-medium bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
                 Admin
               </span>

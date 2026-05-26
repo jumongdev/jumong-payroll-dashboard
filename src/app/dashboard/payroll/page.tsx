@@ -1,0 +1,291 @@
+import { auth } from "@/lib/auth"
+import { db } from "@/lib/prisma"
+import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/table"
+import { addDebt, deleteDebt } from "@/lib/actions/payroll"
+import PayButton from "@/components/pay-button"
+import ExportButton from "@/components/export-button"
+import { exportPayrollCSV, exportDebtsCSV } from "@/lib/actions/export"
+import { formatCurrency, formatDate } from "@/lib/utils"
+import { DollarSign, Clock } from "lucide-react"
+
+function getWeekRange(date: Date = new Date()) {
+  const day = date.getDay()
+  const diffToMonday = day === 0 ? -6 : 1 - day
+  const monday = new Date(date)
+  monday.setDate(date.getDate() + diffToMonday)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  return {
+    monday: monday.toISOString().split("T")[0],
+    sunday: sunday.toISOString().split("T")[0],
+    label: `${monday.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${sunday.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+  }
+}
+
+export default async function PayrollPage() {
+  const session = await auth()
+  if (session?.user?.role !== "admin") redirect("/dashboard/account")
+
+  const week = getWeekRange()
+  const weekStart = new Date(week.monday)
+  const weekEnd = new Date(week.sunday + "T23:59:59")
+
+  let period = await db.payrollPeriod.findFirst({
+    where: { weekStart, weekEnd },
+  })
+
+  let entries: any[] = []
+
+  if (period) {
+    entries = await db.payrollEntry.findMany({
+      where: { payrollPeriodId: period.id },
+      include: { user: { select: { fullName: true, employeeId: true, designation: true } } },
+      orderBy: { createdAt: "asc" },
+    })
+  } else {
+    period = await db.payrollPeriod.create({ data: { weekStart, weekEnd } })
+
+    const employees = await db.user.findMany({
+      where: { role: "employee" },
+      select: { id: true, rate: true },
+    })
+
+    const allAttendances = await db.attendance.findMany({
+      where: {
+        userId: { in: employees.map((e) => e.id) },
+        date: { gte: weekStart, lte: weekEnd },
+        checkIn: { not: null },
+        checkOut: { not: null },
+        status: { not: "absent" },
+      },
+    })
+
+    const debts = await db.employeeDebt.findMany({
+      where: { userId: { in: employees.map((e) => e.id) }, remaining: { gt: 0 } },
+    })
+
+    for (const emp of employees) {
+      const empAttendances = allAttendances.filter((a) => a.userId === emp.id)
+      const totalHours = empAttendances.reduce((sum, a) => {
+        const diff = (a.checkOut!.getTime() - a.checkIn!.getTime()) / 3600000
+        return sum + Math.min(diff, 12)
+      }, 0)
+
+      const empDebts = debts.filter((d) => d.userId === emp.id)
+      const totalDebt = empDebts.reduce((sum, d) => sum + d.remaining, 0)
+
+      if (totalHours > 0 || totalDebt > 0) {
+        const grossPay = Math.round(totalHours * (emp.rate || 0) * 100) / 100
+        const netPay = Math.round((grossPay - totalDebt) * 100) / 100
+
+        await db.payrollEntry.create({
+          data: {
+            payrollPeriodId: period.id,
+            userId: emp.id,
+            totalHours: Math.round(totalHours * 100) / 100,
+            rate: emp.rate || 0,
+            grossPay,
+            deductions: totalDebt,
+            netPay,
+          },
+        })
+      }
+    }
+
+    revalidatePath("/dashboard/payroll")
+  }
+
+  const [allPeriods, debts, employees] = await Promise.all([
+    db.payrollPeriod.findMany({
+      include: { entries: { select: { netPay: true, status: true } } },
+      orderBy: { weekStart: "desc" },
+      take: 5,
+    }),
+    db.employeeDebt.findMany({
+      where: { remaining: { gt: 0 } },
+      include: { user: { select: { fullName: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.user.findMany({
+      where: { role: "employee" },
+      select: { id: true, fullName: true },
+      orderBy: { fullName: "asc" },
+    }),
+  ])
+
+  const totalToPay = entries.filter((e) => e.status === "pending").reduce((s, e) => s + e.netPay, 0)
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-zinc-900">Payroll</h2>
+          <p className="text-zinc-500 mt-1">
+            Week: {week.label} &middot; {entries.length} employees &middot; Pending: {formatCurrency(totalToPay)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ExportButton action={exportPayrollCSV} label="Export Payroll" />
+          <ExportButton action={exportDebtsCSV} label="Export Debts" />
+        </div>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <DollarSign size={16} />
+              Add Debt / Deduction
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form action={addDebt} className="flex flex-col gap-2">
+              <select name="userId" required className="h-9 rounded-lg border border-zinc-200 px-2 text-sm">
+                <option value="">Select employee...</option>
+                {employees.map((e) => (
+                  <option key={e.id} value={e.id}>{e.fullName}</option>
+                ))}
+              </select>
+              <div className="flex gap-2">
+                <Input name="amount" type="number" step="0.01" required placeholder="Amount" className="flex-1 h-9 text-sm" />
+                <select name="type" required className="h-9 rounded-lg border border-zinc-200 px-2 text-sm w-36">
+                  <option value="cash_advance">Cash Advance</option>
+                  <option value="damage">Damage</option>
+                  <option value="store_negative">Store Negative</option>
+                </select>
+                <Button type="submit" size="sm" className="h-9 shrink-0">Add</Button>
+              </div>
+              <Input name="description" placeholder="Description (optional)" className="h-9 text-sm" />
+            </form>
+          </CardContent>
+        </Card>
+
+        {debts.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                Active Debts ({debts.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {debts.map((d) => (
+                  <div key={d.id} className="flex items-center justify-between p-2 rounded border text-sm">
+                    <div>
+                      <p className="font-medium">{d.user.fullName}</p>
+                      <p className="text-xs text-zinc-500">
+                        {d.type.replace("_", " ")} · {d.description || "No description"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-red-600 font-medium">{formatCurrency(d.remaining || d.amount)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <DollarSign size={16} />
+            Pay Employees
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {entries.length === 0 ? (
+            <p className="text-sm text-zinc-500 py-4 text-center">No hours or debts recorded this week.</p>
+          ) : (
+            <div className="space-y-2">
+              {entries.map((e) => (
+                <div key={e.id} className="flex items-center justify-between p-3 rounded-lg border bg-white">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xs shrink-0">
+                      {e.user.fullName.charAt(0)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">{e.user.fullName}</p>
+                      <p className="text-xs text-zinc-500">
+                        {e.user.designation || "Employee"} &middot; {e.totalHours}h
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-sm text-zinc-500">
+                        Gross: {formatCurrency(e.grossPay)}
+                        {e.deductions > 0 && <span className="text-red-500"> · Debt: {formatCurrency(e.deductions)}</span>}
+                      </p>
+                      <p className="font-bold text-emerald-600">{formatCurrency(e.netPay)}</p>
+                    </div>
+                    <div className="sm:hidden text-right">
+                      <p className="font-bold text-emerald-600 text-sm">{formatCurrency(e.netPay)}</p>
+                    </div>
+                    {e.status === "paid" ? (
+                      <Badge variant="success">Paid</Badge>
+                    ) : (
+                      <PayButton
+                        entryId={e.id}
+                        periodId={period.id}
+                        grossPay={e.grossPay}
+                        totalDebt={debts.filter((d) => d.userId === e.userId).reduce((s, d) => s + d.remaining, 0)}
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {allPeriods.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Clock size={16} />
+              Payment History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {allPeriods.map((p) => {
+                const paid = p.entries.filter((e) => e.status === "paid")
+                return (
+                  <div key={p.id} className="flex items-center justify-between p-3 rounded-lg border">
+                    <div>
+                      <p className="font-medium text-sm">
+                        {formatDate(p.weekStart)} - {formatDate(new Date(new Date(p.weekStart).getTime() + 6 * 86400000))}
+                      </p>
+                      <p className="text-xs text-zinc-500">{p.entries.length} employees</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <p className="text-sm font-medium">
+                        {paid.length === p.entries.length && p.entries.length > 0 ? (
+                          <span className="text-emerald-600">{formatCurrency(paid.reduce((s, e) => s + e.netPay, 0))} Paid</span>
+                        ) : (
+                          <span className="text-amber-600">Open</span>
+                        )}
+                      </p>
+                      <Badge variant={paid.length === p.entries.length && p.entries.length > 0 ? "success" : "warning"}>
+                        {paid.length === p.entries.length && p.entries.length > 0 ? "Paid" : "Open"}
+                      </Badge>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}

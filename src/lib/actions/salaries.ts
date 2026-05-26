@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/prisma"
+import { computePhilippinePayroll } from "@/lib/philippine-payroll"
 
 export async function createSalary(formData: FormData) {
   const userId = formData.get("userId") as string
@@ -9,15 +10,22 @@ export async function createSalary(formData: FormData) {
   const housingAllowance = parseFloat(formData.get("housingAllowance") as string) || 0
   const transportAllowance = parseFloat(formData.get("transportAllowance") as string) || 0
   const otherAllowances = parseFloat(formData.get("otherAllowances") as string) || 0
+  const overtimePay = parseFloat(formData.get("overtimePay") as string) || 0
+  const holidayPay = parseFloat(formData.get("holidayPay") as string) || 0
+  const thirteenthMonthPay = parseFloat(formData.get("thirteenthMonthPay") as string) || 0
   const deductions = parseFloat(formData.get("deductions") as string) || 0
-  const tax = parseFloat(formData.get("tax") as string) || 0
   const month = formData.get("month") as string
   const year = parseInt(formData.get("year") as string)
   const status = (formData.get("status") as string) || "pending"
   const notes = (formData.get("notes") as string) || null
   const paymentDate = formData.get("paymentDate") as string
 
-  const netSalary = basicSalary + housingAllowance + transportAllowance + otherAllowances - deductions - tax
+  const allowances = housingAllowance + transportAllowance + otherAllowances
+  const computed = computePhilippinePayroll(basicSalary, overtimePay, holidayPay, allowances)
+
+  const grossPay = computed.grossPay + thirteenthMonthPay
+  const totalDeductions = computed.totalDeductions + deductions
+  const netPay = grossPay - totalDeductions
 
   await db.salary.create({
     data: {
@@ -26,9 +34,18 @@ export async function createSalary(formData: FormData) {
       housingAllowance,
       transportAllowance,
       otherAllowances,
+      overtimePay,
+      holidayPay,
+      thirteenthMonthPay,
+      grossPay,
+      sssContribution: computed.sssContribution,
+      philhealthContribution: computed.philhealthContribution,
+      pagibigContribution: computed.pagibigContribution,
+      withholdingTax: computed.withholdingTax,
       deductions,
-      tax,
-      netSalary,
+      tax: computed.withholdingTax,
+      netSalary: netPay,
+      netPay,
       month,
       year,
       status,

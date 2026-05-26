@@ -1,0 +1,17 @@
+{
+  "name": "JumongDev Payroll",
+  "short_name": "JumongDev",
+  "description": "Philippine Payroll Management System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#009661",
+  "theme_color": "#009661",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import "dotenv/config"
 import { PrismaClient } from "../src/generated/prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
 import bcrypt from "bcryptjs"
+import { computePhilippinePayroll } from "../src/lib/philippine-payroll"
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const db = new PrismaClient({ adapter })
@@ -19,19 +20,20 @@ async function main() {
       fullName: "Admin User",
       email: "admin@jumongdev.com",
       password,
-      phone: "555-0000",
-      position: "System Admin",
-      department: "Administration",
+      mobile: "0917-000-0000",
+      address: "Manila, Philippines",
+      designation: "Driver",
       role: "admin",
-      rate: 50,
+      rate: 650,
     },
   })
   console.log("Admin created:", admin.email)
 
   const employees = [
-    { employeeId: "EMP001", fullName: "John Doe", email: "john@company.com", phone: "555-0101", position: "Software Engineer", department: "Engineering", rate: 45 },
-    { employeeId: "EMP002", fullName: "Jane Smith", email: "jane@company.com", phone: "555-0102", position: "Product Manager", department: "Product", rate: 55 },
-    { employeeId: "EMP003", fullName: "Bob Johnson", email: "bob@company.com", phone: "555-0103", position: "Designer", department: "Design", rate: 40 },
+    { employeeId: "EMP001", fullName: "Juan Dela Cruz", email: "juan@company.com", mobile: "0917-123-4567", designation: "Driver", rate: 650 },
+    { employeeId: "EMP002", fullName: "Maria Santos", email: "maria@company.com", mobile: "0918-234-5678", designation: "Cashier", rate: 550 },
+    { employeeId: "EMP003", fullName: "Pedro Reyes", email: "pedro@company.com", mobile: "0919-345-6789", designation: "Helper", rate: 520 },
+    { employeeId: "EMP004", fullName: "Ana Garcia", email: "ana@company.com", mobile: "0920-456-7890", designation: "Bagger", rate: 500 },
   ]
 
   for (const emp of employees) {
@@ -47,13 +49,12 @@ async function main() {
 
     const months = ["January", "February", "March", "April"]
     for (let i = 0; i < months.length; i++) {
-      const basic = emp.rate * 160
-      const housing = basic * 0.2
-      const transport = 300
-      const other = 200
-      const deductions = 150
-      const tax = basic * 0.1
-      const net = basic + housing + transport + other - deductions - tax
+      const basic = emp.rate * 26
+      const housing = Math.round(basic * 0.1 * 100) / 100
+      const transport = 150
+      const other = 100
+      const allowances = housing + transport + other
+      const computed = computePhilippinePayroll(basic, 0, 0, allowances)
 
       await db.salary.upsert({
         where: { id: `${user.id}-${months[i]}-2025` },
@@ -65,9 +66,18 @@ async function main() {
           housingAllowance: housing,
           transportAllowance: transport,
           otherAllowances: other,
-          deductions,
-          tax,
-          netSalary: net,
+          overtimePay: 0,
+          holidayPay: 0,
+          thirteenthMonthPay: 0,
+          grossPay: computed.grossPay,
+          sssContribution: computed.sssContribution,
+          philhealthContribution: computed.philhealthContribution,
+          pagibigContribution: computed.pagibigContribution,
+          withholdingTax: computed.withholdingTax,
+          deductions: 0,
+          tax: computed.withholdingTax,
+          netSalary: computed.netPay,
+          netPay: computed.netPay,
           month: months[i],
           year: 2025,
           status: i < 3 ? "paid" : "pending",
@@ -79,7 +89,7 @@ async function main() {
 
   console.log("Seed complete!")
   console.log("Admin login: admin@jumongdev.com / 581984")
-  console.log("Employee login: john@company.com / password123")
+  console.log("Employee login: juan@company.com / password123")
 }
 
 main()

@@ -32,7 +32,7 @@ export default async function NewSalaryPage() {
           <CardTitle>Salary Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={createSalary} className="space-y-4">
+          <form action={createSalary} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">Employee</label>
               <Select name="userId" required>
@@ -58,31 +58,65 @@ export default async function NewSalaryPage() {
                 <Input name="year" type="number" required defaultValue={currentYear} />
               </div>
             </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-800 mb-3 border-b pb-1">Earnings</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">Basic Salary (PHP)</label>
+                  <Input name="basicSalary" type="number" step="0.01" required defaultValue="15000" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">Overtime Pay (PHP)</label>
+                  <Input name="overtimePay" type="number" step="0.01" defaultValue="0" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">Holiday Pay (PHP)</label>
+                  <Input name="holidayPay" type="number" step="0.01" defaultValue="0" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">13th Month Pay (PHP)</label>
+                  <Input name="thirteenthMonthPay" type="number" step="0.01" defaultValue="0" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-800 mb-3 border-b pb-1">Allowances</h3>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">Housing (PHP)</label>
+                  <Input name="housingAllowance" type="number" step="0.01" defaultValue="0" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">Transport (PHP)</label>
+                  <Input name="transportAllowance" type="number" step="0.01" defaultValue="0" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">Other (PHP)</label>
+                  <Input name="otherAllowances" type="number" step="0.01" defaultValue="0" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-800 mb-3 border-b pb-1">Deductions</h3>
+              <p className="text-xs text-zinc-500 mb-2">
+                SSS, PhilHealth, Pag-IBIG, and Withholding Tax are auto-computed based on basic salary.
+              </p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">Additional Deductions (PHP)</label>
+                  <Input name="deductions" type="number" step="0.01" defaultValue="0" placeholder="Loans, absences, etc." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">Payment Date</label>
+                  <Input name="paymentDate" type="date" />
+                </div>
+              </div>
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">Basic Salary ($)</label>
-                <Input name="basicSalary" type="number" step="0.01" required defaultValue="5000" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">Housing Allowance ($)</label>
-                <Input name="housingAllowance" type="number" step="0.01" defaultValue="0" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">Transport Allowance ($)</label>
-                <Input name="transportAllowance" type="number" step="0.01" defaultValue="0" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">Other Allowances ($)</label>
-                <Input name="otherAllowances" type="number" step="0.01" defaultValue="0" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">Deductions ($)</label>
-                <Input name="deductions" type="number" step="0.01" defaultValue="0" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">Tax ($)</label>
-                <Input name="tax" type="number" step="0.01" defaultValue="0" />
-              </div>
               <div>
                 <label className="block text-sm font-medium text-zinc-700 mb-1">Status</label>
                 <Select name="status" defaultValue="pending">
@@ -91,15 +125,12 @@ export default async function NewSalaryPage() {
                 </Select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">Payment Date</label>
-                <Input name="paymentDate" type="date" />
-              </div>
-              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-zinc-700 mb-1">Notes</label>
                 <Input name="notes" placeholder="Optional notes..." />
               </div>
             </div>
-            <div className="flex justify-end gap-3 pt-4">
+
+            <div className="flex justify-end gap-3 pt-4 border-t">
               <Link href="/dashboard/salaries">
                 <Button variant="outline" type="button">Cancel</Button>
               </Link>

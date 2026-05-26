@@ -3,10 +3,9 @@ import { db } from "@/lib/prisma"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { createEmployee, deleteEmployee } from "@/lib/actions/employees"
-import { formatDate, formatCurrency } from "@/lib/utils"
-import { Users } from "lucide-react"
+import { deleteEmployee } from "@/lib/actions/employees"
+import { formatCurrency } from "@/lib/utils"
+import { Users, Pencil, Trash2 } from "lucide-react"
 import Link from "next/link"
 
 export default async function EmployeesPage() {
@@ -55,19 +54,40 @@ export default async function EmployeesPage() {
                   <div>
                     <p className="font-medium text-zinc-900">{emp.fullName}</p>
                     <p className="text-sm text-zinc-500">
-                      {emp.position || "No position"} &middot; {emp.department || "No department"}
+                      {emp.designation || "No designation"} &middot; ID: {emp.employeeId}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <div className="text-right hidden md:block">
                     <p className="text-sm text-zinc-500">{emp.email}</p>
-                    <p className="text-xs text-zinc-400">ID: {emp.employeeId}</p>
+                    <p className="text-xs text-zinc-400">
+                      {emp.lastLoginAt
+                        ? `Login: ${new Date(emp.lastLoginAt).toLocaleDateString("en-PH", { month: "short", day: "numeric" })}`
+                        : "Never logged in"}
+                    </p>
                   </div>
                   <Badge variant={emp.role === "admin" ? "default" : "secondary"}>
                     {emp.role}
                   </Badge>
-                  <span className="text-sm font-medium">{formatCurrency(emp.rate * 160)}</span>
+                  <span className="text-sm font-medium hidden sm:block">{formatCurrency(emp.rate)}/hr</span>
+                  {isAdmin && (
+                    <div className="flex items-center gap-1">
+                      <Link href={`/dashboard/employees/${emp.id}/edit`}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Pencil size={14} />
+                        </Button>
+                      </Link>
+                      <form action={async () => {
+                        "use server"
+                        await deleteEmployee(emp.id)
+                      }}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50">
+                          <Trash2 size={14} />
+                        </Button>
+                      </form>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

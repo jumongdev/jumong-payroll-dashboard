@@ -3,9 +3,11 @@ import { db } from "@/lib/prisma"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { checkIn, checkOut } from "@/lib/actions/attendance"
+import { checkIn, checkOut, updateAttendanceStatus } from "@/lib/actions/attendance"
+import { exportAttendanceCSV } from "@/lib/actions/export"
+import ExportButton from "@/components/export-button"
 import { formatDateTime, formatTime, hoursWorked } from "@/lib/utils"
-import { Clock } from "lucide-react"
+import { Clock, MapPin, Camera } from "lucide-react"
 
 export default async function AttendancePage() {
   const session = await auth()
@@ -14,7 +16,7 @@ export default async function AttendancePage() {
 
   const records = await db.attendance.findMany({
     where: isAdmin ? {} : { userId: userId! },
-    include: { user: { select: { fullName: true } } },
+    include: { user: { select: { fullName: true, designation: true } } },
     orderBy: { date: "desc" },
     take: 50,
   })
@@ -41,6 +43,7 @@ export default async function AttendancePage() {
             {records.length} records
           </p>
         </div>
+        {isAdmin && <ExportButton action={exportAttendanceCSV} label="Export CSV" />}
       </div>
 
       {!isAdmin && (
@@ -56,7 +59,7 @@ export default async function AttendancePage() {
               <div className="flex gap-3">
                 <form action={async () => {
                   "use server"
-                  await checkIn(userId!, new Date())
+                  await checkIn(userId!, new Date(), "", 0, 0)
                 }}>
                   <Button disabled={!!todayRecord?.checkIn}>
                     {todayRecord?.checkIn ? `In: ${formatTime(todayRecord.checkIn)}` : "Check In"}
@@ -64,7 +67,7 @@ export default async function AttendancePage() {
                 </form>
                 <form action={async () => {
                   "use server"
-                  await checkOut(userId!, new Date())
+                  await checkOut(userId!, new Date(), "", 0, 0)
                 }}>
                   <Button
                     variant="outline"
@@ -92,38 +95,68 @@ export default async function AttendancePage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {records.map((r) => (
               <div
                 key={r.id}
-                className="flex items-center justify-between p-3 rounded-lg border"
+                className="p-3 rounded-lg border"
               >
-                <div>
-                  <p className="text-sm font-medium">
-                    {isAdmin ? r.user.fullName : formatDateTime(r.date)}
-                  </p>
-                  {isAdmin && (
-                    <p className="text-xs text-zinc-500">{formatDateTime(r.date)}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-sm text-right">
-                    {r.checkIn && <p>In: {formatTime(r.checkIn)}</p>}
-                    {r.checkOut && <p>Out: {formatTime(r.checkOut)}</p>}
-                    {r.checkIn && r.checkOut && (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">
+                      {isAdmin ? r.user.fullName : formatDateTime(r.date)}
+                    </p>
+                    {isAdmin && (
                       <p className="text-xs text-zinc-500">
-                        {hoursWorked(r.checkIn, r.checkOut)}
+                        {formatDateTime(r.date)} &middot; {r.user.designation || "Employee"}
                       </p>
                     )}
                   </div>
-                  <Badge
-                    variant={
-                      r.status === "present" ? "success" : r.status === "late" ? "warning" : "destructive"
-                    }
-                  >
-                    {r.status}
-                  </Badge>
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm text-right">
+                      {r.checkIn && <p>In: {formatTime(r.checkIn)}</p>}
+                      {r.checkOut && <p>Out: {formatTime(r.checkOut)}</p>}
+                      {r.checkIn && r.checkOut && (
+                        <p className="text-xs text-zinc-500">
+                          {hoursWorked(r.checkIn, r.checkOut)}
+                        </p>
+                      )}
+                    </div>
+                    <Badge
+                      variant={
+                        r.status === "present" ? "success" : r.status === "late" ? "warning" : "destructive"
+                      }
+                    >
+                      {r.status}
+                    </Badge>
+                  </div>
                 </div>
+
+                {(r.checkInPhoto || r.checkOutPhoto) && (
+                  <div className="flex gap-2 mt-2">
+                    {r.checkInPhoto && (
+                      <img src={r.checkInPhoto} alt="Check-in" className="w-16 h-16 rounded-lg object-cover border" />
+                    )}
+                    {r.checkOutPhoto && (
+                      <img src={r.checkOutPhoto} alt="Check-out" className="w-16 h-16 rounded-lg object-cover border" />
+                    )}
+                  </div>
+                )}
+
+                {(r.checkInLat || r.checkOutLat) && (
+                  <div className="flex items-center gap-4 mt-1 text-xs text-zinc-500">
+                    {r.checkInLat && (
+                      <span className="flex items-center gap-1">
+                        <MapPin size={10} /> In: {r.checkInLat.toFixed(5)}, {r.checkInLng?.toFixed(5)}
+                      </span>
+                    )}
+                    {r.checkOutLat && (
+                      <span className="flex items-center gap-1">
+                        <MapPin size={10} /> Out: {r.checkOutLat?.toFixed(5)}, {r.checkOutLng?.toFixed(5)}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
             {records.length === 0 && (
