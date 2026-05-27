@@ -7,7 +7,7 @@ import { formatCurrency, formatDate } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { User, Mail, Phone, MapPin, Calendar, Hash, Shield, Briefcase, Camera, Pencil, X, Check } from "lucide-react"
+import { User, Mail, Phone, MapPin, Calendar, Hash, Shield, Briefcase, Camera, Pencil, X, Check, AlertTriangle } from "lucide-react"
 
 interface UserData {
   id: string
@@ -73,6 +73,8 @@ export default function AccountView({ user }: { user: UserData }) {
     router.refresh()
   }
 
+  const isProfileComplete = !!(user.mobile && user.address && user.birthDate && user.gender)
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -87,6 +89,16 @@ export default function AccountView({ user }: { user: UserData }) {
           </Button>
         )}
       </div>
+
+      {!isProfileComplete && (
+        <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 flex items-start gap-2">
+          <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-amber-800">Kumpletuhin ang profile</p>
+            <p className="text-xs text-amber-700 mt-0.5">Kailangan mong sagutan ang Mobile, Address, Birthday, at Gender bago makapasok sa dashboard.</p>
+          </div>
+        </div>
+      )}
 
       <Card className="max-w-lg">
         <CardHeader>
@@ -149,28 +161,29 @@ export default function AccountView({ user }: { user: UserData }) {
                   <Phone size={14} className="text-zinc-400 shrink-0" />
                   <span className="text-zinc-500 w-20 shrink-0">Mobile</span>
                 </label>
-                <Input name="mobile" defaultValue={user.mobile || ""} placeholder="0917-123-4567" className="mt-1 text-sm h-9" />
+                <Input name="mobile" required defaultValue={user.mobile || ""} placeholder="0917-123-4567" className="mt-1 text-sm h-9" />
+                {!user.mobile && !editing && <p className="text-xs text-red-500 mt-0.5">Required</p>}
               </div>
               <div>
                 <label className="flex items-center gap-2 text-sm">
                   <MapPin size={14} className="text-zinc-400 shrink-0" />
                   <span className="text-zinc-500 w-20 shrink-0">Address</span>
                 </label>
-                <Input name="address" defaultValue={user.address || ""} placeholder="123 Rizal St., Manila" className="mt-1 text-sm h-9" />
+                <Input name="address" required defaultValue={user.address || ""} placeholder="123 Rizal St., Manila" className="mt-1 text-sm h-9" />
               </div>
               <div>
                 <label className="flex items-center gap-2 text-sm">
                   <Calendar size={14} className="text-zinc-400 shrink-0" />
                   <span className="text-zinc-500 w-20 shrink-0">Birthday</span>
                 </label>
-                <Input name="birthDate" type="date" defaultValue={formatDateValue(user.birthDate)} className="mt-1 text-sm h-9" />
+                <Input name="birthDate" type="date" required defaultValue={formatDateValue(user.birthDate)} className="mt-1 text-sm h-9" />
               </div>
               <div>
                 <label className="flex items-center gap-2 text-sm">
                   <User size={14} className="text-zinc-400 shrink-0" />
                   <span className="text-zinc-500 w-20 shrink-0">Gender</span>
                 </label>
-                <select name="gender" defaultValue={user.gender || ""} className="mt-1 w-full h-9 rounded-lg border border-zinc-200 px-3 text-sm">
+                <select name="gender" required defaultValue={user.gender || ""} className="mt-1 w-full h-9 rounded-lg border border-zinc-200 px-3 text-sm">
                   <option value="">Select...</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
@@ -226,23 +239,21 @@ export default function AccountView({ user }: { user: UserData }) {
               <div className="space-y-3 pt-4 border-t">
                 <InfoRow icon={Hash} label="Employee ID" value={user.employeeId} />
                 <InfoRow icon={Mail} label="Email" value={user.email} />
-                <InfoRow icon={Phone} label="Mobile" value={user.mobile || "N/A"} />
-                <InfoRow icon={MapPin} label="Address" value={user.address || "N/A"} />
-                <InfoRow icon={Calendar} label="Birthday" value={user.birthDate ? formatDate(user.birthDate) : "N/A"} />
+                <InfoRow icon={Phone} label="Mobile" value={user.mobile || <span className="text-red-500">Missing — required</span>} />
+                <InfoRow icon={MapPin} label="Address" value={user.address || <span className="text-red-500">Missing — required</span>} />
+                <InfoRow icon={Calendar} label="Birthday" value={user.birthDate ? formatDate(user.birthDate) : <span className="text-red-500">Missing — required</span>} />
                 <InfoRow icon={Calendar} label="Date Hired" value={formatDate(user.joinDate)} />
                 <InfoRow icon={Briefcase} label="Designation" value={user.designation || "N/A"} />
-                <InfoRow icon={User} label="Gender" value={user.gender || "N/A"} />
+                <InfoRow icon={User} label="Gender" value={user.gender || <span className="text-red-500">Missing — required</span>} />
                 <InfoRow icon={Hash} label="Hourly Rate" value={formatCurrency(user.rate)} />
               </div>
 
-              {(user.sssNumber || user.pagibigNumber || user.philhealthNumber) && (
-                <div className="space-y-3 pt-4 border-t">
-                  <p className="text-sm font-medium text-zinc-700">Government IDs</p>
-                  <InfoRow icon={Shield} label="SSS" value={user.sssNumber || "N/A"} />
-                  <InfoRow icon={Shield} label="Pag-IBIG" value={user.pagibigNumber || "N/A"} />
-                  <InfoRow icon={Shield} label="PhilHealth" value={user.philhealthNumber || "N/A"} />
-                </div>
-              )}
+              <div className="space-y-3 pt-4 border-t">
+                <p className="text-sm font-medium text-zinc-700">Government IDs <span className="text-zinc-400 text-xs font-normal">(optional)</span></p>
+                <InfoRow icon={Shield} label="SSS" value={user.sssNumber || "N/A"} />
+                <InfoRow icon={Shield} label="Pag-IBIG" value={user.pagibigNumber || "N/A"} />
+                <InfoRow icon={Shield} label="PhilHealth" value={user.philhealthNumber || "N/A"} />
+              </div>
             </>
           )}
         </CardContent>
@@ -251,7 +262,7 @@ export default function AccountView({ user }: { user: UserData }) {
   )
 }
 
-function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 text-sm">
       <Icon size={14} className="text-zinc-400 shrink-0" />

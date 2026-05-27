@@ -15,6 +15,7 @@ import {
   User,
   Building,
   ClipboardList,
+  Home,
 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
@@ -30,10 +31,10 @@ const adminLinks = [
 ]
 
 const employeeLinks = [
-  { href: "/dashboard/employee", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/account", label: "My Account", icon: User },
-  { href: "/dashboard/salaries", label: "My Salary", icon: DollarSign },
-  { href: "/dashboard/payslips", label: "My Payslip", icon: FileText },
+  { href: "/dashboard/employee", label: "Home", icon: Home },
+  { href: "/dashboard/account", label: "Profile", icon: User },
+  { href: "/dashboard/salaries", label: "Salary", icon: DollarSign },
+  { href: "/dashboard/payslips", label: "Payslip", icon: FileText },
 ]
 
 export default function Sidebar({ user }: { user?: { name?: string | null; email?: string | null; role?: string } }) {
@@ -46,56 +47,61 @@ export default function Sidebar({ user }: { user?: { name?: string | null; email
     <>
       <button
         onClick={() => setOpen(!open)}
-        className="fixed top-4 left-4 z-50 lg:hidden bg-white p-2 rounded-lg shadow border"
+        className="fixed top-3 left-3 z-50 lg:hidden glass-card p-2.5 rounded-xl"
       >
-        {open ? <X size={20} /> : <Menu size={20} />}
+        {open ? <X size={20} className="text-zinc-700" /> : <Menu size={20} className="text-zinc-700" />}
       </button>
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 bg-white border-r flex flex-col transition-transform lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 w-64 glass flex flex-col border-r border-white/50 transition-transform duration-300 lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="p-6 border-b">
-          <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="JumongDev Payroll" className="h-12 w-auto" />
+        <div className="p-5 border-b border-zinc-100/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <span className="text-white font-bold text-lg">J</span>
+            </div>
+            <div>
+              <p className="font-semibold text-sm text-zinc-900">JumongDev</p>
+              <p className="text-xs text-zinc-500">Payroll System</p>
+            </div>
           </div>
-          <p className="text-sm text-zinc-500 mt-1">PH Payroll System</p>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                 pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(link.href))
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "text-zinc-600 hover:bg-zinc-100"
+                  ? "bg-emerald-50 text-emerald-700 shadow-sm"
+                  : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
               )}
             >
-              <link.icon size={18} />
+              <link.icon size={18} className="shrink-0" />
               {link.label}
             </Link>
           ))}
         </nav>
 
-        <div className="p-4 border-t">
-          <div className="mb-3 px-1">
+        <div className="p-3 border-t border-zinc-100/50">
+          <div className="mb-2 px-3 py-2">
             <p className="text-sm font-medium text-zinc-900 truncate">{user?.name}</p>
             <p className="text-xs text-zinc-500 truncate">{user?.email}</p>
             {isAdmin && (
-              <span className="inline-block mt-1 text-xs font-medium bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
-                Admin
+              <span className="inline-block mt-1.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                ADMIN
               </span>
             )}
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 font-medium"
           >
             <LogOut size={16} />
             Sign Out
@@ -105,10 +111,30 @@ export default function Sidebar({ user }: { user?: { name?: string | null; email
 
       {open && (
         <div
-          className="fixed inset-0 z-30 bg-black/20 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm lg:hidden animate-fade-in"
           onClick={() => setOpen(false)}
         />
       )}
+
+      <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden glass border-t border-white/50 safe-bottom">
+        <nav className="flex items-center justify-around px-2 py-1.5">
+          {links.slice(0, 4).map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-[10px] font-medium transition-all duration-200",
+                pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(link.href))
+                  ? "text-emerald-600"
+                  : "text-zinc-400"
+              )}
+            >
+              <link.icon size={20} />
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
     </>
   )
 }

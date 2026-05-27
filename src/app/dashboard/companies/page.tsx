@@ -4,18 +4,21 @@ import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { to12Hour } from "@/lib/utils"
 import { createCompany, deleteCompany } from "@/lib/actions/companies"
 import { createShift, deleteShift } from "@/lib/actions/shifts"
 import { Building, Trash2, MapPin, Plus, Clock } from "lucide-react"
 import StorePinButton from "@/components/store-pin-button"
-import QrUploadButton from "@/components/qr-upload-button"
+import StoreImagesUpload from "@/components/store-images-upload"
+import DeleteCompanyButton from "@/components/delete-company-button"
+import CompanySettings from "@/components/company-settings"
 
 export default async function CompaniesPage() {
   const session = await auth()
   if (session?.user?.role !== "admin") redirect("/dashboard/account")
 
   const companies = await db.company.findMany({
-    include: { shifts: true },
+    include: { shifts: true, storeImages: { orderBy: { order: "asc" } } },
     orderBy: { createdAt: "desc" },
   })
 
@@ -66,29 +69,22 @@ export default async function CompaniesPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <StorePinButton companyId={c.id} companyName={c.name} />
-                  <QrUploadButton companyId={c.id} currentQr={c.qrCode} />
-                  <form action={async () => { "use server"; await deleteCompany(c.id) }}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50">
-                      <Trash2 size={14} />
-                    </Button>
-                  </form>
+                  <DeleteCompanyButton companyId={c.id} companyName={c.name} />
                 </div>
               </div>
+              <CompanySettings companyId={c.id} earlyInPaid={c.earlyInPaid} lateOutPaid={c.lateOutPaid} />
 
               <div className="border-t pt-3">
-                <div className="flex items-start gap-3">
-                  {c.qrCode && (
-                    <img src={c.qrCode} alt="QR Code" className="w-16 h-16 rounded border" />
-                  )}
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-zinc-700 mb-2 flex items-center gap-1">
+                <div className="flex-1">
+                  <StoreImagesUpload companyId={c.id} images={c.storeImages} />
+                    <p className="text-xs font-medium text-zinc-700 mb-2 mt-3 flex items-center gap-1">
                       <Clock size={12} /> Shifts
                     </p>
                     {c.shifts.map((s) => (
                       <div key={s.id} className="flex items-center justify-between py-1 text-sm">
                         <span>
                           <span className="font-medium text-zinc-700">{s.name}</span>
-                          <span className="text-zinc-500 ml-2">{s.startTime} - {s.endTime}</span>
+                          <span className="text-zinc-500 ml-2">{to12Hour(s.startTime)} - {to12Hour(s.endTime)}</span>
                         </span>
                         <form action={async () => { "use server"; await deleteShift(s.id) }}>
                           <Button variant="ghost" size="icon" className="h-6 w-6 text-red-400 hover:text-red-600">
@@ -108,8 +104,7 @@ export default async function CompaniesPage() {
                     </form>
                   </div>
                 </div>
-              </div>
-            </CardContent>
+              </CardContent>
           </Card>
         ))}
         {companies.length === 0 && (

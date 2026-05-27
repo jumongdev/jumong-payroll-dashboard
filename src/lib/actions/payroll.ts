@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/prisma"
+import { computePaidHours } from "@/lib/utils"
 
 export async function addDebt(formData: FormData) {
   const userId = formData.get("userId") as string
@@ -59,15 +60,31 @@ export async function computePayroll(formData: FormData) {
       },
     })
 
+    const allSchedules = await db.schedule.findMany({
+      where: {
+        userId: { in: employees.map((e) => e.id) },
+        date: { gte: startDate, lte: endDate },
+      },
+      include: { shift: { select: { startTime: true, endTime: true } }, company: { select: { earlyInPaid: true, lateOutPaid: true } } },
+    })
+
     const debts = await db.employeeDebt.findMany({
       where: { userId: { in: employees.map((e) => e.id) }, remaining: { gt: 0 } },
     })
 
     for (const emp of employees) {
       const empAttendances = allAttendances.filter((a) => a.userId === emp.id)
+      const empSchedules = allSchedules.filter((s) => s.userId === emp.id)
       const totalHours = empAttendances.reduce((sum, a) => {
+        const dateStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(a.date)
+        const sched = empSchedules.find(
+          (s) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(s.date) === dateStr
+        )
+        if (sched?.shift?.endTime) {
+          return sum + computePaidHours(a.checkIn!, a.checkOut!, sched.shift.startTime, sched.shift.endTime, dateStr, sched.company.earlyInPaid, sched.company.lateOutPaid)
+        }
         const diff = (a.checkOut!.getTime() - a.checkIn!.getTime()) / 3600000
-        return sum + Math.min(diff, 12)
+        return sum + diff
       }, 0)
 
       const empDebts = debts.filter((d) => d.userId === emp.id)

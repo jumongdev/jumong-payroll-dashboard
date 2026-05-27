@@ -46,3 +46,19 @@ export async function deleteCompany(id: string) {
   await db.company.delete({ where: { id } })
   revalidatePath("/dashboard/companies")
 }
+
+export async function clearQrCode(companyId: string) {
+  await db.company.update({
+    where: { id: companyId },
+    data: { qrCode: null },
+  })
+  revalidatePath("/dashboard/companies")
+}
+
+export async function toggleCompanySetting(companyId: string, field: "earlyInPaid" | "lateOutPaid", value: boolean) {
+  await db.company.update({
+    where: { id: companyId },
+    data: { [field]: value },
+  })
+  revalidatePath("/dashboard/companies")
+}

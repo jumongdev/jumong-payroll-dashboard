@@ -2,13 +2,11 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/prisma"
+import { getPhilippineToday } from "@/lib/utils"
 
 export async function checkIn(userId: string, date: Date, photo: string, lat: number, lng: number) {
   try {
-    const startOfDay = new Date(date)
-    startOfDay.setHours(0, 0, 0, 0)
-    const endOfDay = new Date(date)
-    endOfDay.setHours(23, 59, 59, 999)
+    const { start: startOfDay, end: endOfDay } = getPhilippineToday()
 
     const existing = await db.attendance.findFirst({
       where: { userId, date: { gte: startOfDay, lte: endOfDay } },
@@ -38,10 +36,7 @@ export async function checkIn(userId: string, date: Date, photo: string, lat: nu
 
 export async function checkOut(userId: string, date: Date, photo: string, lat: number, lng: number) {
   try {
-    const startOfDay = new Date(date)
-    startOfDay.setHours(0, 0, 0, 0)
-    const endOfDay = new Date(date)
-    endOfDay.setHours(23, 59, 59, 999)
+    const { start: startOfDay, end: endOfDay } = getPhilippineToday()
 
     const record = await db.attendance.findFirst({
       where: { userId, date: { gte: startOfDay, lte: endOfDay } },

@@ -3,7 +3,7 @@
 import { useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { QrCode } from "lucide-react"
+import { QrCode, Trash2 } from "lucide-react"
 
 export default function QrUploadButton({ companyId, currentQr }: { companyId: string; currentQr: string | null }) {
   const router = useRouter()
@@ -32,13 +32,24 @@ export default function QrUploadButton({ companyId, currentQr }: { companyId: st
     img.src = URL.createObjectURL(file)
   }
 
+  async function handleDelete() {
+    const { clearQrCode } = await import("@/lib/actions/companies")
+    await clearQrCode(companyId)
+    router.refresh()
+  }
+
   return (
     <>
       <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
       <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => fileRef.current?.click()}>
         <QrCode size={12} className="mr-1" />
-        {currentQr ? "Change QR" : "Upload QR"}
+        {currentQr ? "Change" : "Upload"}
       </Button>
+      {currentQr && (
+        <Button variant="ghost" size="sm" className="h-8 text-xs text-red-500" onClick={handleDelete}>
+          <Trash2 size={12} />
+        </Button>
+      )}
     </>
   )
 }

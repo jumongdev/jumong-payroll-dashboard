@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { checkIn, checkOut, updateAttendanceStatus } from "@/lib/actions/attendance"
 import { exportAttendanceCSV } from "@/lib/actions/export"
 import ExportButton from "@/components/export-button"
-import { formatDateTime, formatTime, hoursWorked } from "@/lib/utils"
+import { formatDateTime, formatTime, hoursWorked, getPhilippineToday } from "@/lib/utils"
 import { Clock, MapPin, Camera } from "lucide-react"
 
 export default async function AttendancePage() {
@@ -21,11 +21,7 @@ export default async function AttendancePage() {
     take: 50,
   })
 
-  const today = new Date()
-  const todayStart = new Date(today)
-  todayStart.setHours(0, 0, 0, 0)
-  const todayEnd = new Date(today)
-  todayEnd.setHours(23, 59, 59, 999)
+  const { start: todayStart, end: todayEnd } = getPhilippineToday()
 
   const todayRecord = await db.attendance.findFirst({
     where: {

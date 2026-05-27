@@ -118,17 +118,32 @@ model Payslip {
 }
 
 model Company {
-  id        String     @id @default(uuid())
-  name      String
-  address   String?
-  latitude  Float?
-  longitude Float?
-  qrCode    String?    @map("qr_code")
-  createdAt DateTime   @default(now()) @map("created_at")
-  schedules Schedule[]
-  shifts    Shift[]
+  id          String       @id @default(uuid())
+  name        String
+  address     String?
+  latitude    Float?
+  longitude   Float?
+  qrCode      String?      @map("qr_code")
+  earlyInPaid Boolean      @default(true) @map("early_in_paid")
+  lateOutPaid Boolean      @default(false) @map("late_out_paid")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  schedules   Schedule[]
+  shifts      Shift[]
+  storeImages StoreImage[]
 
   @@map("companies")
+}
+
+model StoreImage {
+  id        String   @id @default(uuid())
+  companyId String   @map("company_id")
+  title     String   @default("")
+  image     String
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("store_images")
 }
 
 model Shift {
@@ -204,9 +219,10 @@ model PayrollEntry {
 }
 
 model Advisory {
-  id        String   @id @default(uuid())
-  message   String   @default("")
-  updatedAt DateTime @default(now()) @updatedAt
+  id          String   @id @default(uuid())
+  message     String   @default("")
+  eventBanner String?  @map("event_banner")
+  updatedAt   DateTime @default(now()) @updatedAt
 
   @@map("advisory")
 }

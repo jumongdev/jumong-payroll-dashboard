@@ -10,14 +10,15 @@ import { addDebt, deleteDebt } from "@/lib/actions/payroll"
 import PayButton from "@/components/pay-button"
 import ExportButton from "@/components/export-button"
 import { exportPayrollCSV, exportDebtsCSV } from "@/lib/actions/export"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import { formatCurrency, formatDate, computePaidHours } from "@/lib/utils"
 import { DollarSign, Clock } from "lucide-react"
 
-function getWeekRange(date: Date = new Date()) {
-  const day = date.getDay()
+function getWeekRange() {
+  const phToday = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" }))
+  const day = phToday.getDay()
   const diffToMonday = day === 0 ? -6 : 1 - day
-  const monday = new Date(date)
-  monday.setDate(date.getDate() + diffToMonday)
+  const monday = new Date(phToday)
+  monday.setDate(phToday.getDate() + diffToMonday)
   const sunday = new Date(monday)
   sunday.setDate(monday.getDate() + 6)
   return {
@@ -65,15 +66,31 @@ export default async function PayrollPage() {
       },
     })
 
+    const allSchedules = await db.schedule.findMany({
+      where: {
+        userId: { in: employees.map((e) => e.id) },
+        date: { gte: weekStart, lte: weekEnd },
+      },
+      include: { shift: { select: { startTime: true, endTime: true } }, company: { select: { earlyInPaid: true, lateOutPaid: true } } },
+    })
+
     const debts = await db.employeeDebt.findMany({
       where: { userId: { in: employees.map((e) => e.id) }, remaining: { gt: 0 } },
     })
 
     for (const emp of employees) {
       const empAttendances = allAttendances.filter((a) => a.userId === emp.id)
+      const empSchedules = allSchedules.filter((s) => s.userId === emp.id)
       const totalHours = empAttendances.reduce((sum, a) => {
+        const dateStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(a.date)
+        const sched = empSchedules.find(
+          (s) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(s.date) === dateStr
+        )
+        if (sched?.shift?.endTime) {
+          return sum + computePaidHours(a.checkIn!, a.checkOut!, sched.shift.startTime, sched.shift.endTime, dateStr, sched.company.earlyInPaid, sched.company.lateOutPaid)
+        }
         const diff = (a.checkOut!.getTime() - a.checkIn!.getTime()) / 3600000
-        return sum + Math.min(diff, 12)
+        return sum + diff
       }, 0)
 
       const empDebts = debts.filter((d) => d.userId === emp.id)

@@ -55,13 +55,20 @@ export default function ClockInOut({ userId, companyLat, companyLng, todayRecord
 
   async function getLocation(): Promise<{ lat: number; lng: number }> {
     return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) return reject(new Error("GPS not supported"))
+      if (!navigator.geolocation) return reject({ code: 0, message: "Walang GPS" })
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => reject(new Error("Location denied")),
+        (err) => reject(err),
         { enableHighAccuracy: true, timeout: 10000 }
       )
     })
+  }
+
+  function getLocationError(err: { code: number }): string {
+    if (err.code === 1) return "Naka-block ang location. Pumunta sa Settings ng phone > Apps > JumongDev > Permissions > Location > Allow"
+    if (err.code === 2) return "Hindi makuha ang lokasyon. Subukan sa labas o i-on/off ang GPS."
+    if (err.code === 3) return "Matagal makuha ang lokasyon. Subukan muli."
+    return "Hindi pinayagan ang location. I-check ang phone settings."
   }
 
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
@@ -73,7 +80,7 @@ export default function ClockInOut({ userId, companyLat, companyLng, todayRecord
       setPhoto(compressed)
       setShowPhotoInput(false)
     } catch {
-      setError("Failed to process photo")
+      setError("Hindi ma-process ang litrato")
     }
   }
 
@@ -88,13 +95,13 @@ export default function ClockInOut({ userId, companyLat, companyLng, todayRecord
     try {
       const loc = await getLocation()
       const dist = getDistance(loc.lat, loc.lng, companyLat!, companyLng!)
-      if (dist > 100) {
-        setError(`You are ${Math.round(dist)}m away from the store. Must be within 100m.`)
+      if (dist > 200) {
+        setError(`Ikaw ay ${Math.round(dist)}m ang layo sa store. Dapat nasa loob ng 200m.`)
         return null
       }
       return loc
-    } catch {
-      setError("Please allow location access")
+    } catch (err: any) {
+      setError(getLocationError(err))
       return null
     }
   }
@@ -105,13 +112,14 @@ export default function ClockInOut({ userId, companyLat, companyLng, todayRecord
     setError("")
     const loc = await verifyLocation()
     if (!loc) { setLoading(null); return }
+
     try {
       setCapturedLoc(loc)
       const result = await checkIn(userId, new Date(), photo, loc.lat, loc.lng)
       if (result?.error) { setError(result.error); setLoading(null); return }
       router.refresh()
     } catch {
-      setError("Failed to check in")
+      setError("Hindi makapag-check in. Subukan muli.")
     } finally {
       setLoading(null)
     }
@@ -123,13 +131,14 @@ export default function ClockInOut({ userId, companyLat, companyLng, todayRecord
     setError("")
     const loc = await verifyLocation()
     if (!loc) { setLoading(null); return }
+
     try {
       setCapturedLoc(loc)
       const result = await checkOut(userId, new Date(), photo, loc.lat, loc.lng)
       if (result?.error) { setError(result.error); setLoading(null); return }
       router.refresh()
     } catch {
-      setError("Failed to check out")
+      setError("Hindi makapag-check out. Subukan muli.")
     } finally {
       setLoading(null)
     }

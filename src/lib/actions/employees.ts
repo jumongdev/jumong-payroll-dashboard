@@ -111,7 +111,7 @@ export async function updateProfile(formData: FormData) {
       pagibigNumber: pagibigNumber || null,
       philhealthNumber: philhealthNumber || null,
       gender: gender || null,
-      profileImage: profileImage || null,
+      profileImage: profileImage?.startsWith("data:") ? profileImage : null,
     },
   })
 

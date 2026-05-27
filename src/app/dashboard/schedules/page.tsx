@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/dialog"
 import { assignSchedule, removeSchedule, copyScheduleToNextWeek } from "@/lib/actions/schedules"
-import { formatDate } from "@/lib/utils"
+import { formatDate, getPhilippineToday } from "@/lib/utils"
 import { Building, Trash2, Plus, Users, AlertCircle } from "lucide-react"
 
 export default async function SchedulesPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
@@ -14,8 +14,13 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
   if (session?.user?.role !== "admin") redirect("/dashboard/account")
 
   const params = await searchParams
-  const today = new Date()
-  const todayStr = today.toISOString().split("T")[0]
+  const { dateStr: todayStr, start: todayStart, end: todayEnd } = getPhilippineToday()
+  const tomorrowStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(Date.now() + 86400000)
   const selectedDate = params.date || todayStr
   const dateStart = new Date(selectedDate)
   const dateEnd = new Date(selectedDate + "T23:59:59")
@@ -101,7 +106,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                 <div key={dateKey} className="p-3 rounded-lg border bg-zinc-50/50">
                   <p className="text-sm font-semibold text-zinc-800 mb-2">
                     {new Date(dateKey + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                    {dateKey === todayStr ? " (Today)" : dateKey === new Date(today.getTime() + 86400000).toISOString().split("T")[0] ? " (Tomorrow)" : ""}
+                    {dateKey === todayStr ? " (Today)" : dateKey === tomorrowStr ? " (Tomorrow)" : ""}
                   </p>
                   <div className="space-y-2">
                     {[...companyMap.entries()].map(([companyName, items]) => (
