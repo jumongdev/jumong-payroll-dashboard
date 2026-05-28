@@ -16,6 +16,7 @@ import {
   Building,
   ClipboardList,
   Home,
+  TrendingUp,
 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
@@ -26,6 +27,7 @@ const adminLinks = [
   { href: "/dashboard/companies", label: "Companies", icon: Building },
   { href: "/dashboard/schedules", label: "Schedule", icon: ClipboardList },
   { href: "/dashboard/payroll", label: "Payroll", icon: DollarSign },
+  { href: "/dashboard/daily-earnings", label: "Earnings", icon: TrendingUp },
   { href: "/dashboard/salaries", label: "Salaries", icon: FileText },
   { href: "/dashboard/attendance", label: "Attendance", icon: Clock },
 ]
@@ -33,6 +35,7 @@ const adminLinks = [
 const employeeLinks = [
   { href: "/dashboard/employee", label: "Home", icon: Home },
   { href: "/dashboard/account", label: "Profile", icon: User },
+  { href: "/dashboard/daily-earnings", label: "Earnings", icon: TrendingUp },
   { href: "/dashboard/salaries", label: "Salary", icon: DollarSign },
   { href: "/dashboard/payslips", label: "Payslip", icon: FileText },
 ]
