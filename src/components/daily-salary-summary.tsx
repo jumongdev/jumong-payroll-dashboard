@@ -41,8 +41,7 @@ export default async function DailySalarySummary() {
     paidHours: number
     pay: number
     status: "done" | "working" | "absent"
-    earlyInPaid: boolean
-    lateOutPaid: boolean
+    missingShift: boolean
   }
 
   const rows: Row[] = []
@@ -58,6 +57,7 @@ export default async function DailySalarySummary() {
     let rawHours = 0
     let paidHours = 0
     let status: Row["status"] = "absent"
+    let missingShift = !shiftEnd
 
     if (att?.checkIn && att?.checkOut) {
       checkIn = toPHTime(att.checkIn)
@@ -65,7 +65,7 @@ export default async function DailySalarySummary() {
       rawHours = (att.checkOut.getTime() - att.checkIn.getTime()) / 3600000
       paidHours = shiftEnd
         ? computePaidHours(att.checkIn, att.checkOut, shiftStart!, shiftEnd, todayStr, earlyIn, lateOut)
-        : rawHours
+        : 0
       status = "done"
     } else if (att?.checkIn) {
       checkIn = toPHTime(att.checkIn)
@@ -73,7 +73,7 @@ export default async function DailySalarySummary() {
       rawHours = (new Date().getTime() - att.checkIn.getTime()) / 3600000
       paidHours = shiftEnd
         ? computePaidHours(att.checkIn, new Date(), shiftStart!, shiftEnd, todayStr, earlyIn, lateOut)
-        : rawHours
+        : 0
       status = "working"
     }
 
@@ -89,8 +89,7 @@ export default async function DailySalarySummary() {
       paidHours,
       pay: paidHours * s.user.rate,
       status,
-      earlyInPaid: earlyIn,
-      lateOutPaid: lateOut,
+      missingShift,
     })
   }
 
@@ -142,7 +141,7 @@ export default async function DailySalarySummary() {
                         {r.shiftStart && r.shiftEnd ? (
                           <span>{to12Hour(r.shiftStart)}-{to12Hour(r.shiftEnd)}</span>
                         ) : (
-                          <span className="text-zinc-300">—</span>
+                          <span className="text-red-400 text-[10px]">No shift</span>
                         )}
                       </td>
                       <td className="py-2 px-2 text-center">{r.checkIn ?? "—"}</td>
@@ -151,15 +150,17 @@ export default async function DailySalarySummary() {
                       <td className={cn(
                         "py-2 px-2 text-center font-medium",
                         r.paidHours > 0 && r.paidHours < r.rawHours ? "text-amber-600" : "",
-                        r.paidHours > 0 ? "text-emerald-600" : ""
+                        r.paidHours > 0 ? "text-emerald-600" : "",
+                        r.missingShift && r.rawHours > 0 ? "text-red-500" : ""
                       )}>
-                        {r.paidHours > 0 ? `${r.paidHours.toFixed(1)}h` : "—"}
+                        {r.missingShift && r.rawHours > 0 ? "No shift" : r.paidHours > 0 ? `${r.paidHours.toFixed(1)}h` : "—"}
                       </td>
                       <td className={cn(
                         "py-2 pl-2 text-right font-semibold",
-                        r.status === "done" ? "text-emerald-600" : r.status === "working" ? "text-amber-600" : "text-zinc-400"
+                        r.status === "done" ? "text-emerald-600" : r.status === "working" ? "text-amber-600" : "text-zinc-400",
+                        r.missingShift ? "text-red-500" : ""
                       )}>
-                        {r.pay > 0 ? formatCurrency(r.pay) : "—"}
+                        {r.missingShift ? "No shift" : r.pay > 0 ? formatCurrency(r.pay) : "—"}
                       </td>
                     </tr>
                   ))}
