@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/prisma"
 import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -220,16 +221,29 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                                 <p className="font-medium text-sm truncate">{s.user.fullName}</p>
                                 <p className="text-xs text-zinc-500 truncate">
                                   {s.user.designation || "Employee"}
-                                  {s.shift ? ` · ${s.shift.name}` : ""}
                                   {att?.checkIn ? ` · In: ${att.checkIn.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : !att ? " · No clock-in" : ""}
                                 </p>
                               </div>
                             </div>
-                            <form action={async () => { "use server"; await removeSchedule(s.userId, selectedDate) }}>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50">
-                                <Trash2 size={12} />
-                              </Button>
-                            </form>
+                            <div className="flex items-center gap-1">
+                              <form action={assignSchedule} className="flex items-center gap-1">
+                                <input type="hidden" name="userId" value={s.user.id} />
+                                <input type="hidden" name="companyId" value={company.id} />
+                                <input type="hidden" name="date" value={selectedDate} />
+                                <Select name="shiftId" className="h-7 text-xs w-28" defaultValue={s.shift?.id || ""}>
+                                  <option value="">No shift</option>
+                                  {company.shifts.map((sh) => (
+                                    <option key={sh.id} value={sh.id}>{sh.name}</option>
+                                  ))}
+                                </Select>
+                                <Button type="submit" variant="ghost" size="sm" className="h-7 text-xs px-1 text-zinc-400">Save</Button>
+                              </form>
+                              <form action={async () => { "use server"; await removeSchedule(s.userId, selectedDate); revalidatePath("/dashboard/schedules") }}>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50">
+                                  <Trash2 size={12} />
+                                </Button>
+                              </form>
+                            </div>
                           </div>
                         )
                       })}
