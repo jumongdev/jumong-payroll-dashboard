@@ -70,3 +70,14 @@ export async function updateAttendanceStatus(id: string, status: string, notes?:
   })
   revalidatePath("/dashboard/attendance")
 }
+
+export async function updateAttendanceTime(id: string, checkIn?: string, checkOut?: string) {
+  const data: Record<string, Date | null> = {}
+  if (checkIn !== undefined) data.checkIn = checkIn ? new Date(checkIn) : null
+  if (checkOut !== undefined) data.checkOut = checkOut ? new Date(checkOut) : null
+  await db.attendance.update({ where: { id }, data })
+  revalidatePath("/dashboard/attendance")
+  revalidatePath("/dashboard/payroll")
+  revalidatePath("/dashboard/daily-earnings")
+  revalidatePath("/dashboard")
+}

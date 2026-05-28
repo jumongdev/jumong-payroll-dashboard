@@ -3,11 +3,13 @@ import { db } from "@/lib/prisma"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { checkIn, checkOut, updateAttendanceStatus } from "@/lib/actions/attendance"
+import { checkIn, checkOut, updateAttendanceStatus, updateAttendanceTime } from "@/lib/actions/attendance"
 import { exportAttendanceCSV } from "@/lib/actions/export"
 import ExportButton from "@/components/export-button"
 import { formatDateTime, formatTime, hoursWorked, getPhilippineToday } from "@/lib/utils"
-import { Clock, MapPin, Camera } from "lucide-react"
+import { Clock, MapPin, Camera, Pencil } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import EditAttendanceTime from "@/components/edit-attendance-time"
 
 export default async function AttendancePage() {
   const session = await auth()
@@ -125,6 +127,13 @@ export default async function AttendancePage() {
                     >
                       {r.status}
                     </Badge>
+                    {isAdmin && (
+                      <EditAttendanceTime
+                        recordId={r.id}
+                        currentIn={r.checkIn}
+                        currentOut={r.checkOut}
+                      />
+                    )}
                   </div>
                 </div>
 
