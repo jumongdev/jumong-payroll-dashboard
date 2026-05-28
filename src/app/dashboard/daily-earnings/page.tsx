@@ -29,8 +29,8 @@ interface DayEarning {
 }
 
 async function getEarningsForDate(dateStr: string, userId?: string): Promise<{ date: string; earnings: DayEarning[]; total: number }> {
-  const start = new Date(`${dateStr}T00:00:00`)
-  const end = new Date(`${dateStr}T23:59:59`)
+  const start = new Date(`${dateStr}T00:00:00+08:00`)
+  const end = new Date(`${dateStr}T23:59:59+08:00`)
 
   const scheduleWhere: any = { date: { gte: start, lt: end } }
   const attendanceWhere: any = { date: { gte: start, lte: end } }
