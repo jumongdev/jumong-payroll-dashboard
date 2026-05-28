@@ -230,12 +230,16 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                                 <input type="hidden" name="userId" value={s.user.id} />
                                 <input type="hidden" name="companyId" value={company.id} />
                                 <input type="hidden" name="date" value={selectedDate} />
-                                <Select name="shiftId" className="h-7 text-xs w-28" defaultValue={s.shift?.id || ""}>
+                                <select
+                                  name="shiftId"
+                                  defaultValue={s.shift?.id || ""}
+                                  className="h-8 rounded border border-zinc-200 px-1.5 text-xs min-w-28 bg-white"
+                                >
                                   <option value="">No shift</option>
                                   {company.shifts.map((sh) => (
                                     <option key={sh.id} value={sh.id}>{sh.name}</option>
                                   ))}
-                                </Select>
+                                </select>
                                 <Button type="submit" variant="ghost" size="sm" className="h-7 text-xs px-1 text-zinc-400">Save</Button>
                               </form>
                               <form action={async () => { "use server"; await removeSchedule(s.userId, selectedDate); revalidatePath("/dashboard/schedules") }}>
