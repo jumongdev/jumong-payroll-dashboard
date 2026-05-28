@@ -48,12 +48,17 @@ async function getEarningsForDate(dateStr: string, userId?: string): Promise<{ d
         shift: { select: { startTime: true, endTime: true } },
       },
     }),
-    db.attendance.findMany({ where: attendanceWhere }),
+    db.attendance.findMany({
+      where: attendanceWhere,
+      include: { user: { select: { fullName: true, rate: true } } },
+    }),
   ])
 
   const earnings: DayEarning[] = []
+  const scheduledUserIds = new Set<string>()
 
   for (const s of schedules) {
+    scheduledUserIds.add(s.userId)
     const att = attendances.find((a) => a.userId === s.userId)
     const shiftStart = s.shift?.startTime ?? null
     const shiftEnd = s.shift?.endTime ?? null
@@ -96,6 +101,32 @@ async function getEarningsForDate(dateStr: string, userId?: string): Promise<{ d
       pay: paidHours * s.user.rate,
       status,
       missingShift: !shiftEnd,
+    })
+  }
+
+  for (const a of attendances) {
+    if (scheduledUserIds.has(a.userId)) continue
+    if (!a.checkIn) continue
+    const checkIn = toPHTime(a.checkIn)
+    const checkOut = a.checkOut ? toPHTime(a.checkOut) : null
+    const rawHours = a.checkOut
+      ? (a.checkOut.getTime() - a.checkIn.getTime()) / 3600000
+      : (new Date().getTime() - a.checkIn.getTime()) / 3600000
+
+    earnings.push({
+      userId: a.userId,
+      name: a.user.fullName,
+      company: "—",
+      rate: a.user.rate,
+      shiftStart: null,
+      shiftEnd: null,
+      checkIn,
+      checkOut,
+      rawHours,
+      paidHours: 0,
+      pay: 0,
+      status: a.checkOut ? "done" : "working",
+      missingShift: true,
     })
   }
 
