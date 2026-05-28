@@ -9,18 +9,20 @@ import { useRouter } from "next/navigation"
 
 export default function EditAttendanceTime({ recordId, currentIn, currentOut }: {
   recordId: string
-  currentIn: Date | null
-  currentOut: Date | null
+  currentIn: Date | string | null
+  currentOut: Date | string | null
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [checkIn, setCheckIn] = useState(currentIn ? toLocalDatetime(currentIn) : "")
-  const [checkOut, setCheckOut] = useState(currentOut ? toLocalDatetime(currentOut) : "")
+  const [checkIn, setCheckIn] = useState(currentIn ? toLocalDatetime(new Date(currentIn)) : "")
+  const [checkOut, setCheckOut] = useState(currentOut ? toLocalDatetime(new Date(currentOut)) : "")
   const [saving, setSaving] = useState(false)
 
   async function save() {
     setSaving(true)
-    await updateAttendanceTime(recordId, checkIn || undefined, checkOut || undefined)
+    const cin = checkIn ? new Date(checkIn + ":00+08:00").toISOString() : undefined
+    const cout = checkOut ? new Date(checkOut + ":00+08:00").toISOString() : undefined
+    await updateAttendanceTime(recordId, cin, cout)
     setSaving(false)
     setOpen(false)
     router.refresh()

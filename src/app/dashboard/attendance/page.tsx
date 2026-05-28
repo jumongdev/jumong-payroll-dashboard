@@ -7,20 +7,27 @@ import { checkIn, checkOut, updateAttendanceStatus, updateAttendanceTime } from 
 import { exportAttendanceCSV } from "@/lib/actions/export"
 import ExportButton from "@/components/export-button"
 import { formatDateTime, formatTime, hoursWorked, getPhilippineToday } from "@/lib/utils"
-import { Clock, MapPin, Camera, Pencil } from "lucide-react"
+import { Clock, MapPin, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import EditAttendanceTime from "@/components/edit-attendance-time"
 
-export default async function AttendancePage() {
+export default async function AttendancePage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const session = await auth()
   const isAdmin = session?.user?.role === "admin"
   const userId = session?.user?.id
+  const params = await searchParams
+  const search = params.q || ""
+
+  const recordWhere: any = isAdmin ? {} : { userId: userId! }
+  if (search && isAdmin) {
+    recordWhere.user = { fullName: { contains: search, mode: "insensitive" } }
+  }
 
   const records = await db.attendance.findMany({
-    where: isAdmin ? {} : { userId: userId! },
+    where: recordWhere,
     include: { user: { select: { fullName: true, designation: true } } },
     orderBy: { date: "desc" },
-    take: 50,
+    take: search ? 100 : 50,
   })
 
   const { start: todayStart, end: todayEnd } = getPhilippineToday()
@@ -34,14 +41,27 @@ export default async function AttendancePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold text-zinc-900">Attendance</h2>
           <p className="text-zinc-500 mt-1">
-            {records.length} records
+            {records.length} records{search ? ` matching "${search}"` : ""}
           </p>
         </div>
-        {isAdmin && <ExportButton action={exportAttendanceCSV} label="Export CSV" />}
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <form className="flex items-center gap-1">
+              <Input name="q" placeholder="Search name..." defaultValue={search} className="h-9 w-44 text-sm" />
+              <Button type="submit" size="sm" variant="ghost" className="h-9 px-2">
+                <Search size={16} />
+              </Button>
+              {search && (
+                <a href="/dashboard/attendance" className="text-xs text-zinc-500 hover:text-zinc-700">Clear</a>
+              )}
+            </form>
+          )}
+          {isAdmin && <ExportButton action={exportAttendanceCSV} label="Export CSV" />}
+        </div>
       </div>
 
       {!isAdmin && (
