@@ -124,7 +124,7 @@ model Company {
   latitude    Float?
   longitude   Float?
   qrCode      String?      @map("qr_code")
-  earlyInPaid Boolean      @default(true) @map("early_in_paid")
+  earlyInPaid Boolean      @default(false) @map("early_in_paid")
   lateOutPaid Boolean      @default(false) @map("late_out_paid")
   createdAt   DateTime     @default(now()) @map("created_at")
   schedules   Schedule[]

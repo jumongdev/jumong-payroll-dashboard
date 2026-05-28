@@ -90,23 +90,34 @@ export function hoursWorked(checkIn: Date, checkOut: Date): string {
   return `${h}h ${m}m`
 }
 
+function toPHMinutes(d: Date): number {
+  const ph = new Date(d.getTime() + 8 * 3600000)
+  return ph.getUTCHours() * 60 + ph.getUTCMinutes()
+}
+
 export function computePaidHours(
   checkIn: Date,
   checkOut: Date,
   shiftStartTime: string,
   shiftEndTime: string,
-  dateStr: string,
-  earlyInPaid = true,
+  _dateStr: string,
+  earlyInPaid = false,
   lateOutPaid = false
 ): number {
   const [sh, sm] = shiftStartTime.split(":").map(Number)
   const [eh, em] = shiftEndTime.split(":").map(Number)
-  const shiftStart = new Date(`${dateStr}T${String(sh).padStart(2, "0")}:${String(sm).padStart(2, "0")}:00+08:00`)
-  const shiftEnd = new Date(`${dateStr}T${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}:00+08:00`)
-  const effectiveStart = earlyInPaid ? checkIn : (checkIn > shiftStart ? checkIn : shiftStart)
-  const effectiveEnd = lateOutPaid ? checkOut : (checkOut < shiftEnd ? checkOut : shiftEnd)
-  const hours = (effectiveEnd.getTime() - effectiveStart.getTime()) / 3600000
-  return Math.max(0, hours)
+  const shiftStartMin = sh * 60 + sm
+  const shiftEndMin = eh * 60 + em
+
+  const ci = toPHMinutes(checkIn)
+  const co = toPHMinutes(checkOut)
+
+  const effectiveStart = earlyInPaid ? ci : Math.max(ci, shiftStartMin)
+  const effectiveEnd = lateOutPaid ? co : Math.min(co, shiftEndMin)
+
+  if (effectiveEnd <= effectiveStart) return 0
+
+  return (effectiveEnd - effectiveStart) / 60
 }
 
 export const MONTHS = [

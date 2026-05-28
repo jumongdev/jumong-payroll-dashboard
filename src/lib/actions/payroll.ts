@@ -115,7 +115,7 @@ export async function computePayroll(formData: FormData) {
 export async function payEmployee(entryId: string, periodId: string, deductionAmount: number) {
   await db.payrollEntry.update({
     where: { id: entryId },
-    data: { status: "paid", paidAt: new Date(), deductions: deductionAmount, netPay: { decrement: 0 } },
+    data: { status: "paid", paidAt: new Date() },
   })
 
   const entry = await db.payrollEntry.findUnique({

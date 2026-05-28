@@ -3,13 +3,14 @@ import { db } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import StatsCards from "@/components/stats-cards"
 import { Users, DollarSign, ClipboardList, CheckCircle, AlertCircle, Clock, TrendingUp, Building, Calendar } from "lucide-react"
-import { formatCurrency, formatDate, getPhilippineToday, computePaidHours, cn } from "@/lib/utils"
+import { formatCurrency, formatDate, getPhilippineToday } from "@/lib/utils"
 import { updateAdvisory } from "@/lib/actions/advisory"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import BannerUpload from "@/components/banner-upload"
+import DailySalarySummary from "@/components/daily-salary-summary"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -68,48 +69,6 @@ export default async function DashboardPage() {
   const clockedIn = todayAttendances.filter(a => a.checkIn && !a.checkOut).length
   const clockedOut = todayAttendances.filter(a => a.checkOut).length
   const absent = todaySchedules.filter(s => !todayAttendances.find(a => a.userId === s.userId)).length
-
-  const dailySalaryMap = new Map<string, { name: string; company: string; rate: number; hours: number; pay: number; status: "done" | "working" | "absent" }>()
-
-  for (const s of todaySchedules) {
-    dailySalaryMap.set(s.userId, {
-      name: s.user.fullName,
-      company: s.company.name,
-      rate: s.user.rate,
-      hours: 0,
-      pay: 0,
-      status: "absent",
-    })
-  }
-
-  for (const a of todayAttendances) {
-    const sched = todaySchedules.find(s => s.userId === a.userId)
-    const shiftStart = sched?.shift?.startTime || "00:00"
-    const shiftEnd = sched?.shift?.endTime || "23:59"
-    const earlyIn = sched?.company.earlyInPaid ?? true
-    const lateOut = sched?.company.lateOutPaid ?? false
-    let hours = 0
-    let status: "done" | "working" = "working"
-
-    if (a.checkIn && a.checkOut) {
-      hours = computePaidHours(a.checkIn, a.checkOut, shiftStart, shiftEnd, todayStr, earlyIn, lateOut)
-      status = "done"
-    } else if (a.checkIn) {
-      hours = computePaidHours(a.checkIn, new Date(), shiftStart, shiftEnd, todayStr, earlyIn, lateOut)
-    }
-
-    dailySalaryMap.set(a.userId, {
-      name: a.user.fullName,
-      company: sched?.company.name || "—",
-      rate: a.user.rate,
-      hours,
-      pay: hours * a.user.rate,
-      status,
-    })
-  }
-
-  const dailySalary = [...dailySalaryMap.values()]
-  const totalDailySalary = dailySalary.reduce((sum, s) => sum + s.pay, 0)
 
   const debtByUser = new Map<string, { name: string; total: number }>()
   for (const d of activeDebts) {
@@ -222,47 +181,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign size={18} className="text-emerald-600" />
-              Daily Salary ({todayStr})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {dailySalary.length === 0 ? (
-              <p className="text-sm text-zinc-500 text-center py-4">No schedules for today.</p>
-            ) : (
-              <>
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-3 mb-3 text-center">
-                  <p className="text-xs text-zinc-500 font-medium">Total Expected</p>
-                  <p className="text-xl font-bold text-emerald-700">{formatCurrency(totalDailySalary)}</p>
-                </div>
-                <div className="space-y-1 max-h-48 overflow-y-auto">
-                  {dailySalary.map((s, i) => (
-                    <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-zinc-50/80 text-sm">
-                      <div className="min-w-0 flex-1 mr-2">
-                        <div className="flex items-center gap-1.5">
-                          <p className="font-medium text-xs truncate">{s.name}</p>
-                          {s.status === "done" && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />}
-                          {s.status === "working" && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />}
-                          {s.status === "absent" && <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 shrink-0" />}
-                        </div>
-                        <p className="text-[10px] text-zinc-500">{s.company} &middot; {s.hours > 0 ? `${s.hours.toFixed(2)}h` : "—"} @ {s.rate}/hr</p>
-                      </div>
-                      <span className={cn(
-                        "font-semibold text-sm shrink-0",
-                        s.status === "done" ? "text-emerald-600" : s.status === "working" ? "text-amber-600" : "text-zinc-400"
-                      )}>
-                        {s.hours > 0 ? formatCurrency(s.pay) : "—"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <DailySalarySummary />
 
         <Card>
           <CardHeader>

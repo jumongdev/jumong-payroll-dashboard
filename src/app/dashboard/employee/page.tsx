@@ -174,15 +174,17 @@ export default async function EmployeeDashboard() {
                   checkInLat: todayAttendance.checkInLat,
                 } : null}
               />
-              {todayAttendance?.checkIn && todayAttendance?.checkOut && (
-                <>
-                  <p className="text-sm text-emerald-600 mt-2">
-                    Hours: {(() => {
-                      const diff = (todayAttendance.checkOut!.getTime() - todayAttendance.checkIn!.getTime()) / 3600000
-                      const h = Math.floor(diff)
-                      const m = Math.round((diff - h) * 60)
-                      return `${h}h ${m}m`
-                    })()}
+               {todayAttendance?.checkIn && todayAttendance?.checkOut && (
+                  <>
+                    <p className="text-sm text-emerald-600 mt-2">
+                      Hours: {(() => {
+                        const hours = todaySchedule?.shift?.endTime
+                          ? computePaidHours(todayAttendance.checkIn!, todayAttendance.checkOut!, todaySchedule.shift.startTime, todaySchedule.shift.endTime, todayStr, todaySchedule.company.earlyInPaid, todaySchedule.company.lateOutPaid)
+                          : (todayAttendance.checkOut!.getTime() - todayAttendance.checkIn!.getTime()) / 3600000
+                        const h = Math.floor(hours)
+                        const m = Math.round((hours - h) * 60)
+                        return `${h}h ${m}m`
+                      })()}
                   </p>
                   <p className="text-sm font-medium text-emerald-700 mt-1">
                     Today&apos;s Pay: {(() => {

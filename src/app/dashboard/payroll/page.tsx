@@ -10,31 +10,15 @@ import { addDebt, deleteDebt } from "@/lib/actions/payroll"
 import PayButton from "@/components/pay-button"
 import ExportButton from "@/components/export-button"
 import { exportPayrollCSV, exportDebtsCSV } from "@/lib/actions/export"
-import { formatCurrency, formatDate, computePaidHours } from "@/lib/utils"
+import { formatCurrency, formatDate, computePaidHours, getPhilippineWeekRange } from "@/lib/utils"
 import { DollarSign, Clock } from "lucide-react"
-
-function getWeekRange() {
-  const phToday = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" }))
-  const day = phToday.getDay()
-  const diffToMonday = day === 0 ? -6 : 1 - day
-  const monday = new Date(phToday)
-  monday.setDate(phToday.getDate() + diffToMonday)
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  return {
-    monday: monday.toISOString().split("T")[0],
-    sunday: sunday.toISOString().split("T")[0],
-    label: `${monday.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${sunday.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
-  }
-}
 
 export default async function PayrollPage() {
   const session = await auth()
   if (session?.user?.role !== "admin") redirect("/dashboard/account")
 
-  const week = getWeekRange()
-  const weekStart = new Date(week.monday)
-  const weekEnd = new Date(week.sunday + "T23:59:59")
+  const { monday: weekStart, sunday: weekEnd } = getPhilippineWeekRange()
+  const weekLabel = `${weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
 
   let period = await db.payrollPeriod.findFirst({
     where: { weekStart, weekEnd },
@@ -143,7 +127,7 @@ export default async function PayrollPage() {
         <div>
           <h2 className="text-2xl font-bold text-zinc-900">Payroll</h2>
           <p className="text-zinc-500 mt-1">
-            Week: {week.label} &middot; {entries.length} employees &middot; Pending: {formatCurrency(totalToPay)}
+            Week: {weekLabel} &middot; {entries.length} employees &middot; Pending: {formatCurrency(totalToPay)}
           </p>
         </div>
         <div className="flex items-center gap-2">

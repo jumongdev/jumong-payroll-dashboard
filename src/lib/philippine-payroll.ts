@@ -101,7 +101,8 @@ export function computePhilippinePayroll(basicSalary: number, overtimePay = 0, h
   const sssContribution = computeSSS(basicSalary)
   const philhealthContribution = computePhilHealth(basicSalary)
   const pagibigContribution = computePagIbig(basicSalary)
-  const withholdingTax = computeWithholdingTax(grossPay)
+  const taxableIncome = grossPay - sssContribution - philhealthContribution - pagibigContribution
+  const withholdingTax = computeWithholdingTax(taxableIncome)
   const totalDeductions = sssContribution + philhealthContribution + pagibigContribution + withholdingTax
   const netPay = grossPay - totalDeductions
 
