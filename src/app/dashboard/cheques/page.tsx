@@ -153,19 +153,29 @@ export default async function ChequesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form action={addSupplier} className="flex gap-2 mb-3">
-              <Input name="name" required placeholder="Add supplier name" className="flex-1 h-9 text-sm" />
-              <Button type="submit" size="sm" className="h-9 shrink-0">
-                <Plus size={14} className="mr-1" /> Add
-              </Button>
+            <form action={addSupplier} className="flex flex-col gap-2 mb-3">
+              <div className="flex gap-2">
+                <Input name="name" required placeholder="Supplier name" className="flex-1 h-9 text-sm" />
+                <Button type="submit" size="sm" className="h-9 shrink-0">
+                  <Plus size={14} className="mr-1" /> Add
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Input name="contact" placeholder="Agent/Contact person" className="flex-1 h-8 text-xs" />
+                <Input name="phone" placeholder="Mobile number" className="flex-1 h-8 text-xs" />
+              </div>
             </form>
             {suppliers.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
+              <div className="space-y-1">
                 {suppliers.map((s) => (
-                  <div key={s.id} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 text-sm text-zinc-700">
-                    {s.name}
+                  <div key={s.id} className="flex items-center justify-between py-1 px-2 rounded bg-zinc-50 text-xs">
+                    <div>
+                      <span className="font-medium">{s.name}</span>
+                      {s.contact && <span className="text-zinc-500 ml-2">Agent: {s.contact}</span>}
+                      {s.phone && <span className="text-zinc-400 ml-2">{s.phone}</span>}
+                    </div>
                     <form action={async () => { "use server"; await deleteSupplier(s.id) }}>
-                      <button className="text-zinc-400 hover:text-red-500 ml-0.5">
+                      <button className="text-zinc-400 hover:text-red-500">
                         <X size={12} />
                       </button>
                     </form>
