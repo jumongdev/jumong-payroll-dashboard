@@ -5,7 +5,9 @@ import { db } from "@/lib/prisma"
 
 export async function createCheque(formData: FormData) {
   const chequeNo = formData.get("chequeNo") as string
-  const payee = formData.get("payee") as string
+  const payeeSelect = formData.get("payee") as string
+  const payeeOther = formData.get("payeeOther") as string
+  const payee = payeeSelect === "__other__" ? payeeOther : payeeSelect
   const amount = parseFloat(formData.get("amount") as string) || 0
   const bank = formData.get("bank") as string
   const issueDate = formData.get("issueDate") as string

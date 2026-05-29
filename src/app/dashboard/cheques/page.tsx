@@ -6,16 +6,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/table"
 import { createCheque, updateChequeStatus, deleteCheque } from "@/lib/actions/cheques"
+import { addSupplier, deleteSupplier } from "@/lib/actions/suppliers"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { CreditCard, Plus, Check, X, Trash2 } from "lucide-react"
+import { CreditCard, Plus, Check, X, Trash2, Building } from "lucide-react"
 
 export default async function ChequesPage() {
   const session = await auth()
   if (session?.user?.role !== "admin") redirect("/dashboard/account")
 
-  const cheques = await db.cheque.findMany({
-    orderBy: { issueDate: "desc" },
-  })
+  const [cheques, suppliers] = await Promise.all([
+    db.cheque.findMany({ orderBy: { issueDate: "desc" } }),
+    db.supplier.findMany({ orderBy: { name: "asc" } }),
+  ])
 
   const totalIssued = cheques.filter((c) => c.status === "issued").reduce((s, c) => s + c.amount, 0)
   const totalCleared = cheques.filter((c) => c.status === "cleared").reduce((s, c) => s + c.amount, 0)
@@ -78,7 +80,19 @@ export default async function ChequesPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-700 mb-1">Payee (Supplier)</label>
-              <Input name="payee" required placeholder="Supplier name" className="h-9 text-sm" />
+              <div className="flex gap-1">
+                <select name="payee" required className="flex-1 h-9 rounded-lg border border-zinc-200 bg-white px-2 text-sm">
+                  <option value="">Select supplier...</option>
+                  {suppliers.map((s) => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                  <option value="__other__">+ Other (type below)</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-700 mb-1">or Type Manually</label>
+              <Input name="payeeOther" placeholder="Other payee name" className="h-9 text-sm" />
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-700 mb-1">Amount</label>
@@ -106,6 +120,39 @@ export default async function ChequesPage() {
               <Input name="notes" placeholder="What's this payment for?" className="h-9 text-sm" />
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Building size={16} className="text-emerald-600" />
+            Suppliers ({suppliers.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form action={addSupplier} className="flex gap-2 mb-3">
+            <Input name="name" required placeholder="Add supplier name" className="flex-1 h-9 text-sm" />
+            <Button type="submit" size="sm" className="h-9 shrink-0">
+              <Plus size={14} className="mr-1" /> Add
+            </Button>
+          </form>
+          {suppliers.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {suppliers.map((s) => (
+                <div key={s.id} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 text-sm text-zinc-700">
+                  {s.name}
+                  <form action={async () => { "use server"; await deleteSupplier(s.id) }}>
+                    <button className="text-zinc-400 hover:text-red-500 ml-0.5">
+                      <X size={12} />
+                    </button>
+                  </form>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-400">No suppliers yet. Add your first one above.</p>
+          )}
         </CardContent>
       </Card>
 

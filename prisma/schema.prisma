@@ -254,3 +254,16 @@ model Cheque {
 
   @@map("cheques")
 }
+
+model Supplier {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  contact    String?
+  phone      String?
+  email      String?
+  address    String?
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("suppliers")
+}
