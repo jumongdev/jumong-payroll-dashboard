@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/dialog"
 import { assignSchedule, removeSchedule, copyScheduleToNextWeek } from "@/lib/actions/schedules"
-import { formatDate, getPhilippineToday } from "@/lib/utils"
+import { formatDate, getPhilippineToday, formatTime } from "@/lib/utils"
 import { Building, Trash2, Plus, Users, AlertCircle } from "lucide-react"
 
 export default async function SchedulesPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
@@ -221,7 +221,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                                 <p className="font-medium text-sm truncate">{s.user.fullName}</p>
                                 <p className="text-xs text-zinc-500 truncate">
                                   {s.user.designation || "Employee"}
-                                  {att?.checkIn ? ` · In: ${att.checkIn.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : !att ? " · No clock-in" : ""}
+                                  {att?.checkIn ? ` · In: ${formatTime(att.checkIn)}` : !att ? " · No clock-in" : ""}
                                 </p>
                               </div>
                             </div>
