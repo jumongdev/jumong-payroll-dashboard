@@ -9,6 +9,7 @@ import { createCheque, updateChequeStatus, deleteCheque } from "@/lib/actions/ch
 import { addSupplier } from "@/lib/actions/suppliers"
 import { addBankAccount } from "@/lib/actions/bank-accounts"
 import { DeleteSupplierButton, DeleteBankAccountButton } from "@/components/delete-confirm-button"
+import { EditSupplierButton } from "@/components/edit-supplier-button"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { CreditCard, Plus, Check, X, Trash2, Building, Landmark } from "lucide-react"
 
@@ -175,6 +176,7 @@ export default async function ChequesPage() {
                       {s.contact && <span className="text-zinc-500 ml-2">Agent: {s.contact}</span>}
                       {s.phone && <span className="text-zinc-400 ml-2">{s.phone}</span>}
                     </div>
+                    <EditSupplierButton id={s.id} name={s.name} contact={s.contact} phone={s.phone} />
                     <DeleteSupplierButton id={s.id} name={s.name} />
                   </div>
                 ))}

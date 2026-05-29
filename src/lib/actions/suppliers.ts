@@ -20,3 +20,12 @@ export async function deleteSupplier(id: string) {
   await db.supplier.delete({ where: { id } })
   revalidatePath("/dashboard/cheques")
 }
+
+export async function updateSupplier(id: string, name: string, contact: string | null, phone: string | null) {
+  if (!name) return
+  await db.supplier.update({
+    where: { id },
+    data: { name, contact, phone },
+  })
+  revalidatePath("/dashboard/cheques")
+}
