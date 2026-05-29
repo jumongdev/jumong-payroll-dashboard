@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { formatCurrency, computePaidHours, to12Hour } from "@/lib/utils"
-import { DollarSign, ChevronDown, ChevronRight } from "lucide-react"
+import { DollarSign } from "lucide-react"
 
 function toPHTime(d: Date): string {
   const ph = new Date(d.getTime() + 8 * 3600000)
@@ -144,11 +144,18 @@ export default async function DailyEarningsPage({ searchParams }: { searchParams
 
   const phNow = new Date()
   const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(phNow)
-  const sevenDaysAgo = new Date(phNow.getTime() - 6 * 86400000)
-  const defaultFrom = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(sevenDaysAgo)
+  const today = new Date(`${todayStr}T12:00:00+08:00`)
+  const dayOfWeek = today.getDay()
+  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+  const monday = new Date(today)
+  monday.setDate(today.getDate() + diffToMonday)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  const defaultFrom = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(monday)
+  const defaultTo = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(sunday)
 
   const fromDate = params.from || defaultFrom
-  const toDate = params.to || todayStr
+  const toDate = params.to || defaultTo
 
   const dates: string[] = []
   const current = new Date(`${fromDate}T00:00:00`)
@@ -180,45 +187,6 @@ export default async function DailyEarningsPage({ searchParams }: { searchParams
   }
 
   const grandTotal = results.reduce((s, r) => s + r.total, 0)
-
-  const weeks: { label: string; startDate: string; endDate: string; results: typeof results }[] = []
-  for (const r of results) {
-    const d = new Date(r.date + "T00:00:00")
-    const day = d.getDay()
-    const diffToMonday = day === 0 ? -6 : 1 - day
-    const monday = new Date(d)
-    monday.setDate(d.getDate() + diffToMonday)
-    const weekKey = monday.toISOString().split("T")[0]
-    let week = weeks.find((w) => w.startDate === weekKey)
-    if (!week) {
-      const sunday = new Date(monday)
-      sunday.setDate(monday.getDate() + 6)
-      const label = `${monday.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${sunday.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-      week = { label, startDate: weekKey, endDate: sunday.toISOString().split("T")[0], results: [] }
-      weeks.push(week)
-    }
-    week.results.push(r)
-  }
-
-  const weekEmployeeTotals = new Map<string, Map<string, { name: string; pay: number }>>()
-  for (const w of weeks) {
-    const empMap = new Map<string, { name: string; pay: number }>()
-    for (const r of w.results) {
-      for (const e of r.earnings) {
-        const existing = empMap.get(e.userId)
-        if (existing) {
-          existing.pay += e.pay
-        } else {
-          empMap.set(e.userId, { name: e.name, pay: e.pay })
-        }
-      }
-    }
-    weekEmployeeTotals.set(w.startDate, empMap)
-    const allEmp = new Set<string>()
-    for (const e of w.results.flatMap((r) => r.earnings)) {
-      allEmp.add(e.userId)
-    }
-  }
 
   if (!isAdmin) {
     const myTotal = results.reduce((s, r) => s + r.total, 0)
@@ -284,7 +252,7 @@ export default async function DailyEarningsPage({ searchParams }: { searchParams
                   )}
                   {results.every((r) => r.earnings.length === 0) && (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-sm text-zinc-400">No schedules found for this period.</td>
+                      <td colSpan={7} className="py-8 text-center text-sm text-zinc-400">No earnings found for this period.</td>
                     </tr>
                   )}
                 </tbody>
@@ -317,7 +285,7 @@ export default async function DailyEarningsPage({ searchParams }: { searchParams
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <DollarSign size={16} className="text-emerald-600" />
-            Summary by Employee (Weekly)
+            Summary by Employee
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -326,8 +294,10 @@ export default async function DailyEarningsPage({ searchParams }: { searchParams
               <thead>
                 <tr className="border-b text-zinc-500 text-xs">
                   <th className="text-left py-2 pr-2 font-medium">Employee</th>
-                  {weeks.map((w) => (
-                    <th key={w.startDate} className="text-right py-2 px-2 font-medium whitespace-nowrap">{w.label}</th>
+                  {results.map((r) => (
+                    <th key={r.date} className="text-right py-2 px-2 font-medium whitespace-nowrap">
+                      {new Date(r.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", day: "numeric" })}
+                    </th>
                   ))}
                   <th className="text-right py-2 pl-2 font-medium">Total</th>
                 </tr>
@@ -338,14 +308,16 @@ export default async function DailyEarningsPage({ searchParams }: { searchParams
                   .map(([userId, emp]) => (
                     <tr key={userId} className="border-b last:border-0">
                       <td className="py-2 pr-2 font-medium">{emp.name}</td>
-                      {weeks.map((w) => {
-                        const weekEmp = weekEmployeeTotals.get(w.startDate)
-                        const val = weekEmp?.get(userId)
-                        const weekTotal = w.results.reduce((s, r) => s + r.total, 0)
+                      {results.map((r) => {
+                        const e = r.earnings.find((x) => x.userId === userId)
                         return (
-                          <td key={w.startDate} className="py-2 px-2 text-right text-xs">
-                            {val && val.pay > 0 ? (
-                              <span className="text-emerald-700">{formatCurrency(val.pay)}</span>
+                          <td key={r.date} className="py-2 px-2 text-right text-xs">
+                            {e && e.pay > 0 ? (
+                              <span className={e.missingShift ? "text-amber-500" : "text-emerald-700"}>
+                                {formatCurrency(e.pay)}
+                              </span>
+                            ) : e && e.status === "absent" ? (
+                              <span className="text-zinc-300">—</span>
                             ) : (
                               <span className="text-zinc-400">₱0</span>
                             )}
@@ -358,13 +330,10 @@ export default async function DailyEarningsPage({ searchParams }: { searchParams
               </tbody>
               <tfoot>
                 <tr className="border-t-2 text-xs font-semibold">
-                  <td className="py-2 pr-2">Weekly Totals</td>
-                  {weeks.map((w) => {
-                    const weekTotal = w.results.reduce((s, r) => s + r.total, 0)
-                    return (
-                      <td key={w.startDate} className="py-2 px-2 text-right text-emerald-700">{formatCurrency(weekTotal)}</td>
-                    )
-                  })}
+                  <td className="py-2 pr-2">Daily Totals</td>
+                  {results.map((r) => (
+                    <td key={r.date} className="py-2 px-2 text-right text-emerald-700">{formatCurrency(r.total)}</td>
+                  ))}
                   <td className="py-2 pl-2 text-right text-emerald-700">{formatCurrency(grandTotal)}</td>
                 </tr>
               </tfoot>
