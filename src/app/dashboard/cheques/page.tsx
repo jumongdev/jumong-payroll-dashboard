@@ -80,19 +80,18 @@ export default async function ChequesPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-700 mb-1">Payee (Supplier)</label>
-              <div className="flex gap-1">
-                <select name="payee" required className="flex-1 h-9 rounded-lg border border-zinc-200 bg-white px-2 text-sm">
-                  <option value="">Select supplier...</option>
-                  {suppliers.map((s) => (
-                    <option key={s.id} value={s.name}>{s.name}</option>
-                  ))}
-                  <option value="__other__">+ Other (type below)</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-zinc-700 mb-1">or Type Manually</label>
-              <Input name="payeeOther" placeholder="Other payee name" className="h-9 text-sm" />
+              <input
+                list="supplier-list"
+                name="payee"
+                required
+                placeholder="Type or select supplier..."
+                className="flex h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500"
+              />
+              <datalist id="supplier-list">
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.name} />
+                ))}
+              </datalist>
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-700 mb-1">Amount</label>
@@ -109,7 +108,27 @@ export default async function ChequesPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-700 mb-1">Bank</label>
-              <Input name="bank" placeholder="Bank name" className="h-9 text-sm" />
+              <input
+                list="bank-list"
+                name="bank"
+                placeholder="Type or select bank..."
+                className="flex h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500"
+              />
+              <datalist id="bank-list">
+                <option value="BDO" />
+                <option value="BPI" />
+                <option value="Metrobank" />
+                <option value="Landbank" />
+                <option value="PNB" />
+                <option value="Security Bank" />
+                <option value="UnionBank" />
+                <option value="China Bank" />
+                <option value="RCBC" />
+                <option value="EastWest" />
+                <option value="Chinabank" />
+                <option value="UCPB" />
+                <option value="DBP" />
+              </datalist>
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-700 mb-1">Voucher/Ref No.</label>
