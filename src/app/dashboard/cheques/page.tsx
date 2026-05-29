@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/table"
 import { createCheque, updateChequeStatus, deleteCheque } from "@/lib/actions/cheques"
-import { addSupplier, deleteSupplier } from "@/lib/actions/suppliers"
-import { addBankAccount, deleteBankAccount } from "@/lib/actions/bank-accounts"
+import { addSupplier } from "@/lib/actions/suppliers"
+import { addBankAccount } from "@/lib/actions/bank-accounts"
+import { DeleteSupplierButton, DeleteBankAccountButton } from "@/components/delete-confirm-button"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { CreditCard, Plus, Check, X, Trash2, Building, Landmark } from "lucide-react"
 
@@ -174,11 +175,7 @@ export default async function ChequesPage() {
                       {s.contact && <span className="text-zinc-500 ml-2">Agent: {s.contact}</span>}
                       {s.phone && <span className="text-zinc-400 ml-2">{s.phone}</span>}
                     </div>
-                    <form action={async () => { "use server"; await deleteSupplier(s.id) }}>
-                      <button className="text-zinc-400 hover:text-red-500">
-                        <X size={12} />
-                      </button>
-                    </form>
+                    <DeleteSupplierButton id={s.id} name={s.name} />
                   </div>
                 ))}
               </div>
@@ -229,11 +226,7 @@ export default async function ChequesPage() {
                       <span className="text-zinc-500 ml-2">{ba.accountName}</span>
                       <span className="text-zinc-400 ml-1 font-mono">{ba.accountNumber}</span>
                     </div>
-                    <form action={async () => { "use server"; await deleteBankAccount(ba.id) }}>
-                      <button className="text-zinc-400 hover:text-red-500">
-                        <X size={12} />
-                      </button>
-                    </form>
+                    <DeleteBankAccountButton id={ba.id} bank={ba.bank} accountNumber={ba.accountNumber} />
                   </div>
                 ))}
               </div>
