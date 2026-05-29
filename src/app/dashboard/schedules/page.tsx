@@ -182,8 +182,8 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                   <form action={assignSchedule} className="flex flex-col gap-2">
                     <input type="hidden" name="date" value={selectedDate} />
                     <input type="hidden" name="companyId" value={company.id} />
-                    <div className="flex gap-2">
-                      <Select name="userId" required className="flex-1 h-9 text-sm">
+                    <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                      <Select name="userId" required className="flex-1 min-w-0 h-9 text-sm">
                         <option value="">+ Add employee...</option>
                         {availableEmployees.map((e) => (
                           <option key={e.id} value={e.id}>
@@ -191,14 +191,14 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                           </option>
                         ))}
                       </Select>
-                      <Select name="shiftId" className="w-36 h-9 text-sm">
+                      <Select name="shiftId" className="w-28 sm:w-36 h-9 text-sm">
                         <option value="">Shift</option>
                         {company.shifts.map((s) => (
                           <option key={s.id} value={s.id}>{s.name}</option>
                         ))}
                       </Select>
                       <Button type="submit" size="sm" className="h-9 shrink-0" disabled={availableEmployees.length === 0}>
-                        <Plus size={14} />
+                        <Plus size={14} className="sm:mr-1" /><span className="hidden sm:inline">Add</span>
                       </Button>
                     </div>
                   </form>
@@ -210,7 +210,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                       {companySchedules.map((s) => {
                         const att = attendanceMap.get(s.userId)
                         return (
-                          <div key={s.id} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+                          <div key={s.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-2 first:pt-0 last:pb-0 gap-1.5">
                             <div className="flex items-center gap-2 min-w-0">
                               <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
                                 att ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
@@ -225,7 +225,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 self-end sm:self-auto">
                               <form action={assignSchedule} className="flex items-center gap-1">
                                 <input type="hidden" name="userId" value={s.user.id} />
                                 <input type="hidden" name="companyId" value={company.id} />
@@ -240,10 +240,10 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                                     <option key={sh.id} value={sh.id}>{sh.name}</option>
                                   ))}
                                 </select>
-                                <Button type="submit" variant="ghost" size="sm" className="h-7 text-xs px-1 text-zinc-400">Save</Button>
+                                <Button type="submit" variant="outline" size="sm" className="h-8 text-xs px-2 text-emerald-700 border-emerald-200 hover:bg-emerald-50">Save</Button>
                               </form>
                               <form action={async () => { "use server"; await removeSchedule(s.userId, selectedDate); revalidatePath("/dashboard/schedules") }}>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50">
                                   <Trash2 size={12} />
                                 </Button>
                               </form>
