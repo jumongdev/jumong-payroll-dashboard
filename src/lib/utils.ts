@@ -107,10 +107,14 @@ export function computePaidHours(
   const [sh, sm] = shiftStartTime.split(":").map(Number)
   const [eh, em] = shiftEndTime.split(":").map(Number)
   const shiftStartMin = sh * 60 + sm
-  const shiftEndMin = eh * 60 + em
+  let shiftEndMin = eh * 60 + em
 
   const ci = toPHMinutes(checkIn)
-  const co = toPHMinutes(checkOut)
+  let co = toPHMinutes(checkOut)
+
+  if (co < ci) co += 24 * 60
+
+  if (shiftEndMin <= shiftStartMin) shiftEndMin += 24 * 60
 
   const effectiveStart = earlyInPaid ? ci : Math.max(ci, shiftStartMin)
   const effectiveEnd = lateOutPaid ? co : Math.min(co, shiftEndMin)
