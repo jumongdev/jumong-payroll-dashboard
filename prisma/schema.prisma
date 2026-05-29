@@ -245,6 +245,7 @@ model Cheque {
   amount      Float
   bank        String
   issueDate   DateTime  @map("issue_date")
+  dueDate     DateTime? @map("due_date")
   clearDate   DateTime? @map("clear_date")
   status      String    @default("issued") // issued, cleared, bounced, cancelled
   voucherNo   String?   @map("voucher_no")

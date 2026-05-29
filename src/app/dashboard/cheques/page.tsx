@@ -106,6 +106,10 @@ export default async function ChequesPage() {
                 <label className="block text-xs font-medium text-zinc-700 mb-1">Issue Date</label>
                 <Input name="issueDate" type="date" required className="h-9 text-sm" />
               </div>
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-zinc-700 mb-1">Due Date</label>
+                <Input name="dueDate" type="date" className="h-9 text-sm" />
+              </div>
               <Button type="submit" size="sm" className="h-9 shrink-0">
                 <Plus size={14} className="mr-1" /> Issue
               </Button>
@@ -119,19 +123,9 @@ export default async function ChequesPage() {
                 className="flex h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500"
               />
               <datalist id="bank-list">
-                {[...new Set(bankAccounts.map((b) => b.bank))].map((b) => (
-                  <option key={b} value={b} />
+                {bankAccounts.map((b) => (
+                  <option key={b.id} value={b.bank} />
                 ))}
-                <option value="BDO" />
-                <option value="BPI" />
-                <option value="Metrobank" />
-                <option value="Landbank" />
-                <option value="PNB" />
-                <option value="Security Bank" />
-                <option value="UnionBank" />
-                <option value="China Bank" />
-                <option value="RCBC" />
-                <option value="EastWest" />
               </datalist>
             </div>
             <div>
@@ -261,6 +255,7 @@ export default async function ChequesPage() {
                     <th className="text-right py-2 px-2 font-medium">Amount</th>
                     <th className="text-left py-2 px-2 font-medium">Bank</th>
                     <th className="text-left py-2 px-2 font-medium">Issued</th>
+                    <th className="text-left py-2 px-2 font-medium">Due</th>
                     <th className="text-left py-2 px-2 font-medium">Cleared</th>
                     <th className="text-center py-2 px-2 font-medium">Status</th>
                     <th className="text-left py-2 px-2 font-medium">Notes</th>
@@ -275,6 +270,7 @@ export default async function ChequesPage() {
                       <td className="py-2 px-2 text-right font-medium">{formatCurrency(c.amount)}</td>
                       <td className="py-2 px-2 text-xs">{c.bank}</td>
                       <td className="py-2 px-2 text-xs">{formatDate(c.issueDate)}</td>
+                      <td className="py-2 px-2 text-xs">{c.dueDate ? formatDate(c.dueDate) : "—"}</td>
                       <td className="py-2 px-2 text-xs">{c.clearDate ? formatDate(c.clearDate) : "—"}</td>
                       <td className="py-2 px-2 text-center">
                         <Badge variant={

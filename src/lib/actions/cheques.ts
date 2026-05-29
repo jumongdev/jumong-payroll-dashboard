@@ -9,6 +9,7 @@ export async function createCheque(formData: FormData) {
   const amount = parseFloat(formData.get("amount") as string) || 0
   const bank = formData.get("bank") as string
   const issueDate = formData.get("issueDate") as string
+  const dueDate = formData.get("dueDate") as string
   const voucherNo = (formData.get("voucherNo") as string) || null
   const notes = (formData.get("notes") as string) || null
 
@@ -21,6 +22,7 @@ export async function createCheque(formData: FormData) {
       amount,
       bank: bank || "—",
       issueDate: new Date(`${issueDate}T00:00:00+08:00`),
+      dueDate: dueDate ? new Date(`${dueDate}T00:00:00+08:00`) : null,
       voucherNo,
       notes,
     },
