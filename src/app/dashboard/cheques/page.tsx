@@ -119,6 +119,9 @@ export default async function ChequesPage() {
                 className="flex h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500"
               />
               <datalist id="bank-list">
+                {[...new Set(bankAccounts.map((b) => b.bank))].map((b) => (
+                  <option key={b} value={b} />
+                ))}
                 <option value="BDO" />
                 <option value="BPI" />
                 <option value="Metrobank" />
@@ -129,9 +132,6 @@ export default async function ChequesPage() {
                 <option value="China Bank" />
                 <option value="RCBC" />
                 <option value="EastWest" />
-                <option value="Chinabank" />
-                <option value="UCPB" />
-                <option value="DBP" />
               </datalist>
             </div>
             <div>
@@ -205,10 +205,12 @@ export default async function ChequesPage() {
                   className="flex h-9 flex-1 rounded-lg border border-zinc-200 bg-white px-2 text-sm"
                 />
                 <datalist id="ba-bank-list">
+                  {[...new Set(bankAccounts.map((b) => b.bank))].map((b) => (
+                    <option key={b} value={b} />
+                  ))}
                   <option value="BDO" /><option value="BPI" /><option value="Metrobank" />
                   <option value="Landbank" /><option value="PNB" /><option value="Security Bank" />
-                  <option value="UnionBank" /><option value="China Bank" /><option value="RCBC" />
-                  <option value="EastWest" />
+                  <option value="UnionBank" /><option value="RCBC" /><option value="EastWest" />
                 </datalist>
                 <Button type="submit" size="sm" className="h-9 shrink-0">
                   <Plus size={14} className="mr-1" /> Add
