@@ -7,16 +7,18 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/table"
 import { createCheque, updateChequeStatus, deleteCheque } from "@/lib/actions/cheques"
 import { addSupplier, deleteSupplier } from "@/lib/actions/suppliers"
+import { addBankAccount, deleteBankAccount } from "@/lib/actions/bank-accounts"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { CreditCard, Plus, Check, X, Trash2, Building } from "lucide-react"
+import { CreditCard, Plus, Check, X, Trash2, Building, Landmark } from "lucide-react"
 
 export default async function ChequesPage() {
   const session = await auth()
   if (session?.user?.role !== "admin") redirect("/dashboard/account")
 
-  const [cheques, suppliers] = await Promise.all([
+  const [cheques, suppliers, bankAccounts] = await Promise.all([
     db.cheque.findMany({ orderBy: { issueDate: "desc" } }),
     db.supplier.findMany({ orderBy: { name: "asc" } }),
+    db.bankAccount.findMany({ orderBy: { bank: "asc" } }),
   ])
 
   const totalIssued = cheques.filter((c) => c.status === "issued").reduce((s, c) => s + c.amount, 0)
@@ -142,38 +144,95 @@ export default async function ChequesPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Building size={16} className="text-emerald-600" />
-            Suppliers ({suppliers.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form action={addSupplier} className="flex gap-2 mb-3">
-            <Input name="name" required placeholder="Add supplier name" className="flex-1 h-9 text-sm" />
-            <Button type="submit" size="sm" className="h-9 shrink-0">
-              <Plus size={14} className="mr-1" /> Add
-            </Button>
-          </form>
-          {suppliers.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {suppliers.map((s) => (
-                <div key={s.id} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 text-sm text-zinc-700">
-                  {s.name}
-                  <form action={async () => { "use server"; await deleteSupplier(s.id) }}>
-                    <button className="text-zinc-400 hover:text-red-500 ml-0.5">
-                      <X size={12} />
-                    </button>
-                  </form>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-zinc-400">No suppliers yet. Add your first one above.</p>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Building size={16} className="text-emerald-600" />
+              Suppliers ({suppliers.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form action={addSupplier} className="flex gap-2 mb-3">
+              <Input name="name" required placeholder="Add supplier name" className="flex-1 h-9 text-sm" />
+              <Button type="submit" size="sm" className="h-9 shrink-0">
+                <Plus size={14} className="mr-1" /> Add
+              </Button>
+            </form>
+            {suppliers.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {suppliers.map((s) => (
+                  <div key={s.id} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 text-sm text-zinc-700">
+                    {s.name}
+                    <form action={async () => { "use server"; await deleteSupplier(s.id) }}>
+                      <button className="text-zinc-400 hover:text-red-500 ml-0.5">
+                        <X size={12} />
+                      </button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-zinc-400">No suppliers yet.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Landmark size={16} className="text-emerald-600" />
+              Bank Accounts ({bankAccounts.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form action={addBankAccount} className="flex flex-col gap-2 mb-3">
+              <div className="flex gap-2">
+                <input
+                  list="ba-bank-list"
+                  name="bank"
+                  required
+                  placeholder="Bank"
+                  className="flex h-9 flex-1 rounded-lg border border-zinc-200 bg-white px-2 text-sm"
+                />
+                <datalist id="ba-bank-list">
+                  <option value="BDO" /><option value="BPI" /><option value="Metrobank" />
+                  <option value="Landbank" /><option value="PNB" /><option value="Security Bank" />
+                  <option value="UnionBank" /><option value="China Bank" /><option value="RCBC" />
+                  <option value="EastWest" />
+                </datalist>
+                <Button type="submit" size="sm" className="h-9 shrink-0">
+                  <Plus size={14} className="mr-1" /> Add
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Input name="accountName" required placeholder="Account name" className="flex-1 h-9 text-sm" />
+                <Input name="accountNumber" required placeholder="Account no." className="flex-1 h-9 text-sm" />
+              </div>
+            </form>
+            {bankAccounts.length > 0 ? (
+              <div className="space-y-1">
+                {bankAccounts.map((ba) => (
+                  <div key={ba.id} className="flex items-center justify-between py-1 px-2 rounded bg-zinc-50 text-xs">
+                    <div>
+                      <span className="font-medium">{ba.bank}</span>
+                      <span className="text-zinc-500 ml-2">{ba.accountName}</span>
+                      <span className="text-zinc-400 ml-1 font-mono">{ba.accountNumber}</span>
+                    </div>
+                    <form action={async () => { "use server"; await deleteBankAccount(ba.id) }}>
+                      <button className="text-zinc-400 hover:text-red-500">
+                        <X size={12} />
+                      </button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-zinc-400">No bank accounts yet.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>

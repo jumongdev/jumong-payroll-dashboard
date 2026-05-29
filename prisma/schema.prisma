@@ -267,3 +267,14 @@ model Supplier {
 
   @@map("suppliers")
 }
+
+model BankAccount {
+  id            String   @id @default(uuid())
+  bank          String
+  accountName   String   @map("account_name")
+  accountNumber String   @map("account_number")
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("bank_accounts")
+}
