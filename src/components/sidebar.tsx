@@ -17,6 +17,7 @@ import {
   ClipboardList,
   Home,
   TrendingUp,
+  CreditCard,
 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
@@ -28,6 +29,7 @@ const adminLinks = [
   { href: "/dashboard/schedules", label: "Schedule", icon: ClipboardList },
   { href: "/dashboard/payroll", label: "Payroll", icon: DollarSign },
   { href: "/dashboard/daily-earnings", label: "Earnings", icon: TrendingUp },
+  { href: "/dashboard/cheques", label: "Cheques", icon: CreditCard },
   { href: "/dashboard/salaries", label: "Salaries", icon: FileText },
   { href: "/dashboard/attendance", label: "Attendance", icon: Clock },
 ]

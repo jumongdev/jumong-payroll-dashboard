@@ -237,3 +237,20 @@ model EmployeeDocument {
 
   @@map("employee_documents")
 }
+
+model Cheque {
+  id          String    @id @default(uuid())
+  chequeNo    String    @map("cheque_no")
+  payee       String
+  amount      Float
+  bank        String
+  issueDate   DateTime  @map("issue_date")
+  clearDate   DateTime? @map("clear_date")
+  status      String    @default("issued") // issued, cleared, bounced, cancelled
+  voucherNo   String?   @map("voucher_no")
+  notes       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt
+
+  @@map("cheques")
+}
