@@ -11,7 +11,7 @@ import { addBankAccount } from "@/lib/actions/bank-accounts"
 import { DeleteSupplierButton, DeleteBankAccountButton } from "@/components/delete-confirm-button"
 import { EditSupplierButton } from "@/components/edit-supplier-button"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { CreditCard, Plus, Check, X, Trash2, Building, Landmark } from "lucide-react"
+import { CreditCard, Plus, Check, X, Trash2, Building, Landmark, AlertTriangle } from "lucide-react"
 
 export default async function ChequesPage() {
   const session = await auth()
@@ -25,6 +25,11 @@ export default async function ChequesPage() {
 
   const totalIssued = cheques.filter((c) => c.status === "issued").reduce((s, c) => s + c.amount, 0)
   const totalCleared = cheques.filter((c) => c.status === "cleared").reduce((s, c) => s + c.amount, 0)
+
+  const phNow = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date())
+  const todayStart = new Date(`${phNow}T00:00:00+08:00`)
+  const pastDueCheques = cheques.filter((c) => c.status === "issued" && c.dueDate && c.dueDate < todayStart)
+  const currentCheques = cheques.filter((c) => !pastDueCheques.includes(c))
 
   return (
     <div className="space-y-6">
@@ -68,6 +73,60 @@ export default async function ChequesPage() {
           </CardContent>
         </Card>
       </div>
+
+      {pastDueCheques.length > 0 && (
+        <Card className="border-red-200 bg-red-50/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base text-red-700">
+              <AlertTriangle size={16} />
+              Past Due ({pastDueCheques.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-red-200 text-red-600 text-xs">
+                    <th className="text-left py-1.5 pr-2 font-medium">Cheque No.</th>
+                    <th className="text-left py-1.5 px-2 font-medium">Payee</th>
+                    <th className="text-right py-1.5 px-2 font-medium">Amount</th>
+                    <th className="text-left py-1.5 px-2 font-medium">Bank</th>
+                    <th className="text-left py-1.5 px-2 font-medium">Issued</th>
+                    <th className="text-left py-1.5 px-2 font-medium">Due</th>
+                    <th className="text-right py-1.5 pl-2 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pastDueCheques.map((c) => (
+                    <tr key={c.id} className="border-b border-red-100">
+                      <td className="py-1.5 pr-2 font-mono text-xs">{c.chequeNo}</td>
+                      <td className="py-1.5 px-2 text-xs">{c.payee}</td>
+                      <td className="py-1.5 px-2 text-right text-xs font-medium text-red-700">{formatCurrency(c.amount)}</td>
+                      <td className="py-1.5 px-2 text-xs">{c.bank}</td>
+                      <td className="py-1.5 px-2 text-xs">{formatDate(c.issueDate)}</td>
+                      <td className="py-1.5 px-2 text-xs font-medium text-red-600">{formatDate(c.dueDate!)}</td>
+                      <td className="py-1.5 pl-2 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <form action={async () => { "use server"; await updateChequeStatus(c.id, "cleared") }}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-600" title="Mark Cleared">
+                              <Check size={14} />
+                            </Button>
+                          </form>
+                          <form action={async () => { "use server"; await updateChequeStatus(c.id, "bounced") }}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" title="Mark Bounced">
+                              <X size={14} />
+                            </Button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -243,8 +302,8 @@ export default async function ChequesPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {cheques.length === 0 ? (
-            <p className="text-sm text-zinc-500 text-center py-8">No cheques issued yet.</p>
+          {currentCheques.length === 0 ? (
+            <p className="text-sm text-zinc-500 text-center py-8">No current cheques.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -263,7 +322,7 @@ export default async function ChequesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {cheques.map((c) => (
+                  {currentCheques.map((c) => (
                     <tr key={c.id} className="border-b last:border-0">
                       <td className="py-2 pr-2 font-mono text-xs">{c.chequeNo}</td>
                       <td className="py-2 px-2">{c.payee}</td>
