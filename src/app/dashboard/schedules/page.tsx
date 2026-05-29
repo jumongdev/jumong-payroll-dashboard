@@ -23,8 +23,8 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
     day: "2-digit",
   }).format(Date.now() + 86400000)
   const selectedDate = params.date || todayStr
-  const dateStart = new Date(selectedDate)
-  const dateEnd = new Date(selectedDate + "T23:59:59")
+  const dateStart = new Date(`${selectedDate}T00:00:00+08:00`)
+  const dateEnd = new Date(`${selectedDate}T23:59:59+08:00`)
 
   const [employees, companies, schedules, attendances, upcomingSummaries] = await Promise.all([
     db.user.findMany({
