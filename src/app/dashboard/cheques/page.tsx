@@ -33,6 +33,8 @@ export default async function ChequesPage() {
   const pastDueTotal = pastDueCheques.reduce((s, c) => s + c.amount, 0)
   const currentIssued = currentCheques.filter((c) => c.status === "issued").reduce((s, c) => s + c.amount, 0)
   const totalToPay = pastDueTotal + currentIssued
+  const currentIssuedCheques = currentCheques.filter((c) => c.status !== "cleared")
+  const clearedCheques = currentCheques.filter((c) => c.status === "cleared")
 
   return (
     <div className="space-y-6">
@@ -300,16 +302,55 @@ export default async function ChequesPage() {
         </Card>
       </div>
 
+      {clearedCheques.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base text-emerald-700">
+              <Check size={16} />
+              Cleared ({clearedCheques.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-zinc-500 text-xs">
+                    <th className="text-left py-2 pr-2 font-medium">Cheque No.</th>
+                    <th className="text-left py-2 px-2 font-medium">Payee</th>
+                    <th className="text-right py-2 px-2 font-medium">Amount</th>
+                    <th className="text-left py-2 px-2 font-medium">Bank</th>
+                    <th className="text-left py-2 px-2 font-medium">Issued</th>
+                    <th className="text-left py-2 px-2 font-medium">Cleared</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clearedCheques.map((c) => (
+                    <tr key={c.id} className="border-b last:border-0 text-zinc-500">
+                      <td className="py-2 pr-2 font-mono text-xs">{c.chequeNo}</td>
+                      <td className="py-2 px-2">{c.payee}</td>
+                      <td className="py-2 px-2 text-right">{formatCurrency(c.amount)}</td>
+                      <td className="py-2 px-2 text-xs">{c.bank}</td>
+                      <td className="py-2 px-2 text-xs">{formatDate(c.issueDate)}</td>
+                      <td className="py-2 px-2 text-xs">{c.clearDate ? formatDate(c.clearDate) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <CreditCard size={16} className="text-emerald-600" />
-            All Cheques
+            <CreditCard size={16} className="text-amber-600" />
+            Issued ({currentIssuedCheques.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {currentCheques.length === 0 ? (
-            <p className="text-sm text-zinc-500 text-center py-8">No current cheques.</p>
+          {currentIssuedCheques.length === 0 ? (
+            <p className="text-sm text-zinc-500 text-center py-8">No issued cheques.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -321,14 +362,13 @@ export default async function ChequesPage() {
                     <th className="text-left py-2 px-2 font-medium">Bank</th>
                     <th className="text-left py-2 px-2 font-medium">Issued</th>
                     <th className="text-left py-2 px-2 font-medium">Due</th>
-                    <th className="text-left py-2 px-2 font-medium">Cleared</th>
                     <th className="text-center py-2 px-2 font-medium">Status</th>
                     <th className="text-left py-2 px-2 font-medium">Notes</th>
                     <th className="text-right py-2 pl-2 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {currentCheques.map((c) => (
+                  {currentIssuedCheques.map((c) => (
                     <tr key={c.id} className="border-b last:border-0">
                       <td className="py-2 pr-2 font-mono text-xs">{c.chequeNo}</td>
                       <td className="py-2 px-2">{c.payee}</td>
@@ -336,10 +376,8 @@ export default async function ChequesPage() {
                       <td className="py-2 px-2 text-xs">{c.bank}</td>
                       <td className="py-2 px-2 text-xs">{formatDate(c.issueDate)}</td>
                       <td className="py-2 px-2 text-xs">{c.dueDate ? formatDate(c.dueDate) : "—"}</td>
-                      <td className="py-2 px-2 text-xs">{c.clearDate ? formatDate(c.clearDate) : "—"}</td>
                       <td className="py-2 px-2 text-center">
                         <Badge variant={
-                          c.status === "cleared" ? "success" :
                           c.status === "bounced" ? "destructive" :
                           c.status === "cancelled" ? "destructive" : "warning"
                         }>
@@ -363,13 +401,11 @@ export default async function ChequesPage() {
                               </form>
                             </>
                           )}
-                          {c.status !== "cleared" && (
-                            <form action={async () => { "use server"; await deleteCheque(c.id) }}>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600" title="Delete">
-                                <Trash2 size={12} />
-                              </Button>
-                            </form>
-                          )}
+                          <form action={async () => { "use server"; await deleteCheque(c.id) }}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600" title="Delete">
+                              <Trash2 size={12} />
+                            </Button>
+                          </form>
                         </div>
                       </td>
                     </tr>
