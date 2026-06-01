@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { formatCurrency, computePaidHours, to12Hour } from "@/lib/utils"
-import { DollarSign } from "lucide-react"
+import { DollarSign, ChevronLeft, ChevronRight } from "lucide-react"
 
 function toPHTime(d: Date): string {
   const ph = new Date(d.getTime() + 8 * 3600000)
@@ -135,12 +135,13 @@ async function getEarningsForDate(dateStr: string, userId?: string): Promise<{ d
   return { date: dateStr, earnings, total }
 }
 
-export default async function DailyEarningsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string }> }) {
+export default async function DailyEarningsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; week?: string }> }) {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
 
   const isAdmin = session.user.role === "admin"
   const params = await searchParams
+  const weekOffset = parseInt(params.week || "0") || 0
 
   const phNow = new Date()
   const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(phNow)
@@ -148,7 +149,7 @@ export default async function DailyEarningsPage({ searchParams }: { searchParams
   const dayOfWeek = today.getDay()
   const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
   const monday = new Date(today)
-  monday.setUTCDate(today.getUTCDate() + diffToMonday)
+  monday.setUTCDate(today.getUTCDate() + diffToMonday + weekOffset * 7)
   const sunday = new Date(monday)
   sunday.setUTCDate(monday.getUTCDate() + 6)
   const defaultFrom = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(monday)
@@ -195,8 +196,15 @@ export default async function DailyEarningsPage({ searchParams }: { searchParams
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h2 className="text-2xl font-bold text-zinc-900">My Daily Earnings</h2>
-            <p className="text-sm text-zinc-500 mt-1">
-              {fromDate} &mdash; {toDate} &middot; Total: {formatCurrency(myTotal)}
+            <p className="text-sm text-zinc-500 mt-1 flex items-center gap-1">
+              <a href={`/dashboard/daily-earnings?week=${weekOffset - 1}`} className="hover:text-zinc-700">
+                <ChevronLeft size={14} />
+              </a>
+              {fromDate} &mdash; {toDate}
+              <a href={`/dashboard/daily-earnings?week=${weekOffset + 1}`} className="hover:text-zinc-700">
+                <ChevronRight size={14} />
+              </a>
+              &middot; Total: {formatCurrency(myTotal)}
             </p>
           </div>
           <form className="flex items-center gap-2">
@@ -269,8 +277,15 @@ export default async function DailyEarningsPage({ searchParams }: { searchParams
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold text-zinc-900">Daily Earnings History</h2>
-          <p className="text-sm text-zinc-500 mt-1">
-            {fromDate} &mdash; {toDate} &middot; {allEmployees.size} employees &middot; {formatCurrency(grandTotal)}
+          <p className="text-sm text-zinc-500 mt-1 flex items-center gap-1">
+            <a href={`/dashboard/daily-earnings?week=${weekOffset - 1}`} className="hover:text-zinc-700">
+              <ChevronLeft size={14} />
+            </a>
+            {fromDate} &mdash; {toDate}
+            <a href={`/dashboard/daily-earnings?week=${weekOffset + 1}`} className="hover:text-zinc-700">
+              <ChevronRight size={14} />
+            </a>
+            &middot; {allEmployees.size} employees &middot; {formatCurrency(grandTotal)}
           </p>
         </div>
         <form className="flex items-center gap-2">
