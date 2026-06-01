@@ -92,7 +92,7 @@ export async function computePayroll(formData: FormData) {
 
       if (totalHours > 0 || totalDebt > 0) {
         const grossPay = totalHours * (emp.rate || 0)
-        const netPay = grossPay - totalDebt
+        const netPay = grossPay
 
         await db.payrollEntry.create({
           data: {

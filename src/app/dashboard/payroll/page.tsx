@@ -89,7 +89,7 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
 
       if (totalHours > 0 || totalDebt > 0) {
         const grossPay = Math.round(totalHours * (emp.rate || 0) * 100) / 100
-        const netPay = Math.round((grossPay - totalDebt) * 100) / 100
+        const netPay = Math.round(grossPay * 100) / 100
 
         await db.payrollEntry.create({
           data: {
@@ -108,7 +108,7 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
     revalidatePath("/dashboard/payroll")
   }
 
-  const [allPeriods, debts, employees] = await Promise.all([
+  const [allPeriods, debts, employees, debtHistory] = await Promise.all([
     db.payrollPeriod.findMany({
       include: { entries: { select: { netPay: true, status: true } } },
       orderBy: { weekStart: "desc" },
@@ -123,6 +123,11 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
       where: { role: "employee" },
       select: { id: true, fullName: true },
       orderBy: { fullName: "asc" },
+    }),
+    db.employeeDebt.findMany({
+      include: { user: { select: { fullName: true } } },
+      orderBy: { date: "desc" },
+      take: 50,
     }),
   ])
 
@@ -207,6 +212,50 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
           </Card>
         )}
       </div>
+
+      {debtHistory.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              Debt History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto max-h-64 overflow-y-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b text-zinc-500">
+                    <th className="text-left py-1.5 pr-2 font-medium">Date</th>
+                    <th className="text-left py-1.5 px-2 font-medium">Employee</th>
+                    <th className="text-left py-1.5 px-2 font-medium">Type</th>
+                    <th className="text-left py-1.5 px-2 font-medium">Description</th>
+                    <th className="text-right py-1.5 px-2 font-medium">Amount</th>
+                    <th className="text-right py-1.5 px-2 font-medium">Remaining</th>
+                    <th className="text-center py-1.5 pl-2 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {debtHistory.map((d) => (
+                    <tr key={d.id} className="border-b last:border-0">
+                      <td className="py-1.5 pr-2 text-zinc-500">{new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
+                      <td className="py-1.5 px-2 font-medium">{d.user.fullName}</td>
+                      <td className="py-1.5 px-2 capitalize">{d.type.replace("_", " ")}</td>
+                      <td className="py-1.5 px-2 text-zinc-500 max-w-32 truncate">{d.description || "—"}</td>
+                      <td className="py-1.5 px-2 text-right text-red-600 font-medium">{formatCurrency(d.amount)}</td>
+                      <td className="py-1.5 px-2 text-right">{d.remaining > 0 ? formatCurrency(d.remaining) : <span className="text-emerald-600">₱0</span>}</td>
+                      <td className="py-1.5 pl-2 text-center">
+                        <Badge variant={d.deducted ? "success" : d.remaining > 0 ? "warning" : "success"}>
+                          {d.deducted ? "Paid" : d.remaining > 0 ? "Active" : "Cleared"}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
