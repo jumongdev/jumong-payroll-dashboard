@@ -21,12 +21,12 @@ export function getPhilippineWeekRange(): { monday: Date; sunday: Date } {
   const today = new Date(`${dateStr}T12:00:00+08:00`)
   const day = today.getDay()
   const diffToMonday = day === 0 ? -6 : 1 - day
-  const monday = new Date(today)
-  monday.setDate(today.getDate() + diffToMonday)
-  monday.setHours(0, 0, 0, 0)
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  sunday.setHours(23, 59, 59, 999)
+  const mondayDate = new Date(today)
+  mondayDate.setUTCDate(today.getUTCDate() + diffToMonday)
+  const sundayDate = new Date(mondayDate)
+  sundayDate.setUTCDate(mondayDate.getUTCDate() + 6)
+  const monday = new Date(`${mondayDate.toISOString().split("T")[0]}T00:00:00+08:00`)
+  const sunday = new Date(`${sundayDate.toISOString().split("T")[0]}T23:59:59+08:00`)
   return { monday, sunday }
 }
 

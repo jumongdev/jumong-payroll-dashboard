@@ -148,9 +148,9 @@ export default async function DailyEarningsPage({ searchParams }: { searchParams
   const dayOfWeek = today.getDay()
   const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
   const monday = new Date(today)
-  monday.setDate(today.getDate() + diffToMonday)
+  monday.setUTCDate(today.getUTCDate() + diffToMonday)
   const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
+  sunday.setUTCDate(monday.getUTCDate() + 6)
   const defaultFrom = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(monday)
   const defaultTo = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(sunday)
 
