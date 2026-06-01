@@ -11,13 +11,20 @@ import PayButton from "@/components/pay-button"
 import ExportButton from "@/components/export-button"
 import { exportPayrollCSV, exportDebtsCSV } from "@/lib/actions/export"
 import { formatCurrency, formatDate, computePaidHours, getPhilippineWeekRange } from "@/lib/utils"
-import { DollarSign, Clock } from "lucide-react"
+import { DollarSign, Clock, ChevronLeft, ChevronRight } from "lucide-react"
 
-export default async function PayrollPage() {
+export default async function PayrollPage({ searchParams }: { searchParams: Promise<{ week?: string }> }) {
   const session = await auth()
   if (session?.user?.role !== "admin") redirect("/dashboard/account")
 
-  const { monday: weekStart, sunday: weekEnd } = getPhilippineWeekRange()
+  const params = await searchParams
+  const weekOffset = parseInt(params.week || "0") || 0
+
+  const { monday: currentMonday, sunday: currentSunday } = getPhilippineWeekRange()
+  const weekStart = new Date(currentMonday)
+  weekStart.setUTCDate(currentMonday.getUTCDate() + weekOffset * 7)
+  const weekEnd = new Date(currentSunday)
+  weekEnd.setUTCDate(currentSunday.getUTCDate() + weekOffset * 7)
   const weekLabel = `${weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
 
   let period = await db.payrollPeriod.findFirst({
@@ -123,11 +130,18 @@ export default async function PayrollPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold text-zinc-900">Payroll</h2>
-          <p className="text-zinc-500 mt-1">
-            Week: {weekLabel} &middot; {entries.length} employees &middot; Pending: {formatCurrency(totalToPay)}
+          <p className="text-zinc-500 mt-1 flex items-center gap-1 flex-wrap">
+            <a href={`/dashboard/payroll?week=${weekOffset - 1}`} className="hover:text-zinc-700">
+              <ChevronLeft size={14} />
+            </a>
+            Week: {weekLabel}
+            <a href={`/dashboard/payroll?week=${weekOffset + 1}`} className="hover:text-zinc-700">
+              <ChevronRight size={14} />
+            </a>
+            &middot; {entries.length} employees &middot; Pending: {formatCurrency(totalToPay)}
           </p>
         </div>
         <div className="flex items-center gap-2">
