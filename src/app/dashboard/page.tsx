@@ -3,7 +3,7 @@ import { db } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import StatsCards from "@/components/stats-cards"
 import { Users, DollarSign, ClipboardList, CheckCircle, AlertCircle, Clock, TrendingUp, Building, Calendar } from "lucide-react"
-import { formatCurrency, formatDate, getPhilippineToday } from "@/lib/utils"
+import { formatCurrency, formatDate, getPhilippineToday, getPhilippineWeekRange } from "@/lib/utils"
 import { updateAdvisory } from "@/lib/actions/advisory"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/table"
@@ -20,6 +20,7 @@ export default async function DashboardPage() {
   const phToday = new Date(`${todayStr}T12:00:00+08:00`)
   const phYear = phToday.getFullYear()
   const phMonth = phToday.getMonth()
+  const { monday: currentWeekStart, sunday: currentWeekEnd } = getPhilippineWeekRange()
 
   const [totalEmployees, todaySchedules, todayAttendances, pendingPayroll, recentSalaries, weeklyPayroll, companies, activeDebts, birthdaysThisMonth, advisory] = await Promise.all([
     db.user.count(),
@@ -36,7 +37,10 @@ export default async function DashboardPage() {
       include: { user: { select: { fullName: true, rate: true } } },
     }),
     db.payrollEntry.findMany({
-      where: { status: "pending" },
+      where: {
+        status: "pending",
+        payrollPeriod: { weekStart: currentWeekStart, weekEnd: currentWeekEnd },
+      },
       include: { user: { select: { fullName: true } }, payrollPeriod: true },
     }),
     db.salary.findMany({
