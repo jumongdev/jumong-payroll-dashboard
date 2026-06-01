@@ -90,62 +90,64 @@ export default async function SalariesPage() {
         </Card>
       )}
 
-      <div className="space-y-3">
-        {salaries.map((s) => (
-          <Card key={s.id}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <p className="font-medium">{s.user.fullName}</p>
-                  <p className="text-sm text-zinc-500">
-                    {s.month} {s.year} &middot; ID: {s.user.employeeId}
-                  </p>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="hidden lg:grid grid-cols-5 gap-4 text-sm">
-                    <div>
-                      <p className="text-zinc-400">Gross</p>
-                      <p className="font-medium">{formatCurrency(s.grossPay || s.basicSalary)}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-zinc-400">Deductions</p>
-                      <p className="text-xs text-red-600">
-                        {s.sssContribution ? `SSS ${formatCurrency(s.sssContribution)} · ` : ""}
-                        {s.philhealthContribution ? `PH ${formatCurrency(s.philhealthContribution)} · ` : ""}
-                        {s.pagibigContribution ? `Pag-IBIG ${formatCurrency(s.pagibigContribution)} · ` : ""}
-                        {s.withholdingTax ? `TIN ${formatCurrency(s.withholdingTax)}` : ""}
-                        {s.deductions > 0 ? ` · Other ${formatCurrency(s.deductions)}` : ""}
+      <Card className="overflow-hidden">
+        {salaries.length === 0 ? (
+          <CardContent className="p-8 text-center text-zinc-500">
+            No salary records found.
+          </CardContent>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-100 bg-zinc-50/50">
+                  <th className="text-left py-3 pl-5 pr-2 font-semibold text-zinc-500 text-xs uppercase tracking-wider">
+                    {isAdmin ? "Employee" : "Period"}
+                  </th>
+                  <th className="text-right py-3 px-3 font-semibold text-zinc-500 text-xs uppercase tracking-wider">Gross</th>
+                  <th className="text-left py-3 px-3 font-semibold text-zinc-500 text-xs uppercase tracking-wider hidden md:table-cell">Deductions</th>
+                  <th className="text-right py-3 px-3 font-semibold text-zinc-500 text-xs uppercase tracking-wider">Net</th>
+                  <th className="text-center py-3 pr-5 pl-3 font-semibold text-zinc-500 text-xs uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {salaries.map((s) => (
+                  <tr key={s.id} className="hover:bg-zinc-50/50 transition-colors">
+                    <td className="py-3 pl-5 pr-2">
+                      <p className="font-medium text-zinc-900">{isAdmin ? s.user.fullName : `${s.month} ${s.year}`}</p>
+                      <p className="text-xs text-zinc-400">
+                        {isAdmin ? `${s.month} ${s.year} · ${s.user.employeeId}` : `ID: ${s.user.employeeId}`}
                       </p>
-                    </div>
-                    <div>
-                      <p className="text-zinc-400">Net</p>
-                      <p className="font-bold text-emerald-600">{formatCurrency(s.netSalary)}</p>
-                    </div>
-                    <div className="text-right">
+                    </td>
+                    <td className="py-3 px-3 text-right tabular-nums">
+                      <span className="font-medium text-zinc-700">{formatCurrency(s.grossPay || s.basicSalary)}</span>
+                    </td>
+                    <td className="py-3 px-3 hidden md:table-cell">
+                      <div className="text-xs text-zinc-500 space-y-0.5">
+                        {s.sssContribution > 0 && <p>SSS {formatCurrency(s.sssContribution)}</p>}
+                        {s.philhealthContribution > 0 && <p>PhilHealth {formatCurrency(s.philhealthContribution)}</p>}
+                        {s.pagibigContribution > 0 && <p>Pag-IBIG {formatCurrency(s.pagibigContribution)}</p>}
+                        {s.withholdingTax > 0 && <p>Tax {formatCurrency(s.withholdingTax)}</p>}
+                        {s.deductions > 0 && <p className="text-red-500">Other {formatCurrency(s.deductions)}</p>}
+                        {s.sssContribution <= 0 && s.philhealthContribution <= 0 && s.pagibigContribution <= 0 && s.withholdingTax <= 0 && s.deductions <= 0 && (
+                          <span className="text-zinc-300">—</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-right tabular-nums">
+                      <span className="font-bold text-emerald-600">{formatCurrency(s.netSalary)}</span>
+                    </td>
+                    <td className="py-3 pr-5 pl-3 text-center">
                       <Badge variant={s.status === "paid" ? "success" : s.status === "pending" ? "warning" : "destructive"}>
                         {s.status}
                       </Badge>
-                    </div>
-                  </div>
-                  <div className="text-right lg:hidden">
-                    <p className="font-bold text-emerald-600">{formatCurrency(s.netSalary)}</p>
-                    <Badge variant={s.status === "paid" ? "success" : s.status === "pending" ? "warning" : "destructive"}>
-                      {s.status}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        {salaries.length === 0 && (
-          <Card>
-            <CardContent className="p-8 text-center text-zinc-500">
-              No salary records found.
-            </CardContent>
-          </Card>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-      </div>
+      </Card>
     </div>
   )
 }
