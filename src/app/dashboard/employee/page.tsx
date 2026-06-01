@@ -26,9 +26,9 @@ export default async function EmployeeDashboard() {
 
   const todaySchedule = await db.schedule.findFirst({
     where: { userId, date: { gte: todayStart, lt: todayEnd } },
-      include: {
-        company: { select: { name: true, address: true, latitude: true, longitude: true, storeImages: { orderBy: { order: "asc" } }, earlyInPaid: true, lateOutPaid: true } },
-        shift: { select: { name: true, startTime: true, endTime: true } },
+    include: {
+      company: { select: { name: true, address: true, latitude: true, longitude: true, storeImages: { orderBy: { order: "asc" } }, earlyInPaid: true, lateOutPaid: true } },
+      shift: { select: { name: true, startTime: true, endTime: true } },
     },
   })
 
@@ -85,6 +85,13 @@ export default async function EmployeeDashboard() {
 
   const advisory = await db.advisory.findFirst()
 
+  const debtTrail = await db.debtTransaction.findMany({
+    where: { debt: { userId } },
+    include: { debt: { select: { type: true, description: true, amount: true } } },
+    orderBy: { createdAt: "desc" },
+    take: 30,
+  })
+
   return (
     <div className="space-y-6">
       <div>
@@ -104,11 +111,7 @@ export default async function EmployeeDashboard() {
 
       {advisory?.eventBanner && (
         <div className="rounded-2xl overflow-hidden shadow-sm">
-          <img
-            src={advisory.eventBanner}
-            alt="Event banner"
-            className="w-full h-auto object-cover"
-          />
+          <img src={advisory.eventBanner} alt="Event banner" className="w-full h-auto object-cover" />
         </div>
       )}
 
@@ -148,7 +151,7 @@ export default async function EmployeeDashboard() {
               <p className="text-sm font-medium text-zinc-700 mb-3 flex items-center gap-1">
                 <Clock size={14} /> Attendance
               </p>
-               {!todayAttendance?.checkIn && !todayAttendance?.checkOut && (
+              {!todayAttendance?.checkIn && !todayAttendance?.checkOut && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3 text-xs text-blue-800 space-y-1">
                   <p className="font-medium">Paano mag-time in/out:</p>
                   <p>1. Pindutin ang <strong>Take photo</strong> para kunan ang store</p>
@@ -174,17 +177,17 @@ export default async function EmployeeDashboard() {
                   checkInLat: todayAttendance.checkInLat,
                 } : null}
               />
-               {todayAttendance?.checkIn && todayAttendance?.checkOut && (
-                  <>
-                    <p className="text-sm text-emerald-600 mt-2">
-                      Hours: {(() => {
-                        const hours = todaySchedule?.shift?.endTime
-                          ? computePaidHours(todayAttendance.checkIn!, todayAttendance.checkOut!, todaySchedule.shift.startTime, todaySchedule.shift.endTime, todayStr, todaySchedule.company.earlyInPaid, todaySchedule.company.lateOutPaid)
-                          : (todayAttendance.checkOut!.getTime() - todayAttendance.checkIn!.getTime()) / 3600000
-                        const h = Math.floor(hours)
-                        const m = Math.round((hours - h) * 60)
-                        return `${h}h ${m}m`
-                      })()}
+              {todayAttendance?.checkIn && todayAttendance?.checkOut && (
+                <>
+                  <p className="text-sm text-emerald-600 mt-2">
+                    Hours: {(() => {
+                      const hours = todaySchedule?.shift?.endTime
+                        ? computePaidHours(todayAttendance.checkIn!, todayAttendance.checkOut!, todaySchedule.shift.startTime, todaySchedule.shift.endTime, todayStr, todaySchedule.company.earlyInPaid, todaySchedule.company.lateOutPaid)
+                        : (todayAttendance.checkOut!.getTime() - todayAttendance.checkIn!.getTime()) / 3600000
+                      const h = Math.floor(hours)
+                      const m = Math.round((hours - h) * 60)
+                      return `${h}h ${m}m`
+                    })()}
                   </p>
                   <p className="text-sm font-medium text-emerald-700 mt-1">
                     Today&apos;s Pay: {(() => {
@@ -252,20 +255,51 @@ export default async function EmployeeDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-1.5">
-              {upcomingSchedules.map((s) => {
-                return (
-                  <div key={s.id} className="p-3 rounded-xl bg-zinc-50/80">
-                    <p className="font-medium text-sm text-zinc-800">
-                      {formatDate(s.date)} — {s.company.name}
+              {upcomingSchedules.map((s) => (
+                <div key={s.id} className="p-3 rounded-xl bg-zinc-50/80">
+                  <p className="font-medium text-sm text-zinc-800">
+                    {formatDate(s.date)} — {s.company.name}
+                  </p>
+                  {s.shift && (
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      {s.shift.name} ({to12Hour(s.shift.startTime)} - {to12Hour(s.shift.endTime)})
                     </p>
-                    {s.shift && (
-                      <p className="text-xs text-zinc-500 mt-0.5">
-                        {s.shift.name} ({to12Hour(s.shift.startTime)} - {to12Hour(s.shift.endTime)})
-                      </p>
-                    )}
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {debtTrail.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign size={18} className="text-red-500" />
+              Debt Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-72 overflow-y-auto">
+              {debtTrail.map((t) => (
+                <div key={t.id} className="flex items-start justify-between py-1.5 px-2 rounded bg-zinc-50 text-xs">
+                  <div>
+                    <p>
+                      <span className={t.type === "deduct" ? "text-red-600 font-medium" : "text-emerald-600 font-medium"}>
+                        {t.type === "deduct" ? "—" : "+"} {formatCurrency(t.amount < 0 ? -t.amount : t.amount)}
+                      </span>
+                      <span className="text-zinc-400 ml-1 capitalize">{t.debt.type.replace("_", " ")}</span>
+                    </p>
+                    <p className="text-zinc-400 text-[10px]">
+                      {t.source || ""}{t.notes && t.source ? ` · ${t.notes}` : t.notes || ""}
+                    </p>
                   </div>
-                )
-              })}
+                  <span className="text-zinc-400 text-[10px] shrink-0 ml-2">
+                    {new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -293,28 +327,28 @@ export default async function EmployeeDashboard() {
                 return [...byCompany.entries()]
                   .sort(([a], [b]) => a.localeCompare(b))
                   .map(([company, members]) => (
-                  <div key={company}>
-                    <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-1.5">
-                      {company} ({members.length})
-                    </p>
-                    <div className="space-y-1">
-                      {members.map((s) => (
-                        <div key={s.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-50/80">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm">
-                            {s.user.fullName.charAt(0)}
+                    <div key={company}>
+                      <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-1.5">
+                        {company} ({members.length})
+                      </p>
+                      <div className="space-y-1">
+                        {members.map((s) => (
+                          <div key={s.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-50/80">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm">
+                              {s.user.fullName.charAt(0)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-sm truncate">{s.user.fullName}</p>
+                              <p className="text-xs text-zinc-500 truncate">
+                                {s.user.designation || "Employee"}
+                                {s.shift ? ` (${to12Hour(s.shift.startTime)}-${to12Hour(s.shift.endTime)})` : ""}
+                              </p>
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm truncate">{s.user.fullName}</p>
-                            <p className="text-xs text-zinc-500 truncate">
-                              {s.user.designation || "Employee"}
-                              {s.shift ? ` (${to12Hour(s.shift.startTime)}-${to12Hour(s.shift.endTime)})` : ""}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))
               })()}
             </div>
           )}

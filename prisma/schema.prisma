@@ -185,8 +185,22 @@ model EmployeeDebt {
   deducted    Boolean  @default(false)
   createdAt   DateTime @default(now()) @map("created_at")
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions DebtTransaction[]
 
   @@map("employee_debts")
+}
+
+model DebtTransaction {
+  id         String       @id @default(uuid())
+  debtId     String       @map("debt_id")
+  amount     Float        // positive=added, negative=deducted
+  type       String       // "add", "deduct"
+  source     String?      // e.g. "Payroll May 25-31"
+  notes      String?
+  createdAt  DateTime     @default(now()) @map("created_at")
+  debt       EmployeeDebt @relation(fields: [debtId], references: [id], onDelete: Cascade)
+
+  @@map("debt_transactions")
 }
 
 model PayrollPeriod {

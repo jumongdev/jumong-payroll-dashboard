@@ -12,8 +12,18 @@ export async function addDebt(formData: FormData) {
 
   if (!userId || amount <= 0) return
 
-  await db.employeeDebt.create({
+  const debt = await db.employeeDebt.create({
     data: { userId, amount, remaining: amount, type, description: description || null },
+  })
+
+  await db.debtTransaction.create({
+    data: {
+      debtId: debt.id,
+      amount: amount,
+      type: "add",
+      source: type.replace("_", " "),
+      notes: description || null,
+    },
   })
 
   revalidatePath("/dashboard/employees")
@@ -120,7 +130,10 @@ export async function payEmployee(entryId: string, periodId: string, deductionAm
 
   const entry = await db.payrollEntry.findUnique({
     where: { id: entryId },
-    include: { user: { select: { employeeId: true } } },
+    include: {
+      user: { select: { employeeId: true } },
+      payrollPeriod: { select: { weekStart: true, weekEnd: true } },
+    },
   })
 
   if (entry) {
@@ -145,6 +158,10 @@ export async function payEmployee(entryId: string, periodId: string, deductionAm
       },
     })
 
+    const weekLabel = entry.payrollPeriod
+      ? `${entry.payrollPeriod.weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${entry.payrollPeriod.weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+      : null
+
     if (deductionAmount > 0) {
       let remaining = deductionAmount
       const debts = await db.employeeDebt.findMany({
@@ -158,6 +175,15 @@ export async function payEmployee(entryId: string, periodId: string, deductionAm
         await db.employeeDebt.update({
           where: { id: debt.id },
           data: { remaining: { decrement: deduct }, deducted: (debt.remaining - deduct) <= 0 },
+        })
+        await db.debtTransaction.create({
+          data: {
+            debtId: debt.id,
+            amount: -deduct,
+            type: "deduct",
+            source: weekLabel,
+            notes: debt.description || null,
+          },
         })
         remaining -= deduct
       }
