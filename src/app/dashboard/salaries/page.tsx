@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { DollarSign } from "lucide-react"
+import { DollarSign, TrendingDown } from "lucide-react"
 import Link from "next/link"
 
 export default async function SalariesPage() {
@@ -25,7 +25,15 @@ export default async function SalariesPage() {
     : []
   const activeDebts = debts.filter((d) => d.remaining > 0)
   const totalDebt = activeDebts.reduce((s, d) => s + d.remaining, 0)
-  const paidDebts = debts.filter((d) => d.remaining <= 0)
+
+  const debtTrail = !isAdmin
+    ? await db.debtTransaction.findMany({
+        where: { debt: { userId: userId! } },
+        include: { debt: { select: { type: true, description: true, amount: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 30,
+      })
+    : []
 
   return (
     <div className="space-y-6">
@@ -43,42 +51,41 @@ export default async function SalariesPage() {
         )}
       </div>
 
-      {!isAdmin && debts.length > 0 && (
+      {!isAdmin && debtTrail.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">My Debts</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingDown size={16} className="text-red-500" />
+              Debt Activity
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {totalDebt > 0 && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
                 <p className="text-2xl font-bold text-red-700">{formatCurrency(totalDebt)}</p>
-                <p className="text-xs text-red-500">Total Balance</p>
+                <p className="text-xs text-red-500">Outstanding Balance</p>
               </div>
             )}
-            <div className="space-y-2">
-              {activeDebts.map((d) => (
-                <div key={d.id} className="flex items-center justify-between p-2 rounded border text-sm">
+            <div className="space-y-1.5 max-h-64 overflow-y-auto">
+              {debtTrail.map((t) => (
+                <div key={t.id} className="flex items-start justify-between py-1.5 px-2 rounded bg-zinc-50 text-xs">
                   <div>
-                    <p className="font-medium capitalize">{d.type.replace("_", " ")}</p>
-                    {d.description && <p className="text-xs text-zinc-500">{d.description}</p>}
+                    <p>
+                      <span className={t.type === "deduct" ? "text-red-600 font-medium" : "text-emerald-600 font-medium"}>
+                        {t.type === "deduct" ? "—" : "+"} {formatCurrency(t.amount < 0 ? -t.amount : t.amount)}
+                      </span>
+                      <span className="text-zinc-400 ml-1 capitalize">{t.debt.type.replace("_", " ")}</span>
+                    </p>
+                    <p className="text-zinc-400 text-[10px]">
+                      {t.source || ""}{t.notes ? ` (${t.notes})` : ""}
+                    </p>
                   </div>
-                  <span className="text-red-600 font-medium">{formatCurrency(d.remaining)}</span>
+                  <span className="text-zinc-400 text-[10px] shrink-0 ml-2">
+                    {new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
                 </div>
               ))}
             </div>
-            {paidDebts.length > 0 && (
-              <details className="text-sm">
-                <summary className="text-zinc-500 cursor-pointer">Paid ({paidDebts.length})</summary>
-                <div className="space-y-1 mt-2 pl-2 border-l-2 border-zinc-200">
-                  {paidDebts.map((d) => (
-                    <div key={d.id} className="flex justify-between text-xs">
-                      <span className="capitalize text-zinc-600">{d.type.replace("_", " ")}</span>
-                      <span className="text-zinc-400">{formatCurrency(d.amount)}</span>
-                    </div>
-                  ))}
-                </div>
-              </details>
-            )}
           </CardContent>
         </Card>
       )}
