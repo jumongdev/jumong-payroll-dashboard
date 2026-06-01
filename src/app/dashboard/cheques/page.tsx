@@ -30,6 +30,9 @@ export default async function ChequesPage() {
   const todayStart = new Date(`${phNow}T00:00:00+08:00`)
   const pastDueCheques = cheques.filter((c) => c.status === "issued" && c.dueDate && c.dueDate < todayStart)
   const currentCheques = cheques.filter((c) => !pastDueCheques.includes(c))
+  const pastDueTotal = pastDueCheques.reduce((s, c) => s + c.amount, 0)
+  const currentIssued = currentCheques.filter((c) => c.status === "issued").reduce((s, c) => s + c.amount, 0)
+  const totalToPay = pastDueTotal + currentIssued
 
   return (
     <div className="space-y-6">
@@ -37,7 +40,7 @@ export default async function ChequesPage() {
         <div>
           <h2 className="text-2xl font-bold text-zinc-900">Cheque Tracking</h2>
           <p className="text-sm text-zinc-500 mt-1">
-            {cheques.length} cheques &middot; Issued: {formatCurrency(totalIssued)} &middot; Cleared: {formatCurrency(totalCleared)}
+            {cheques.length} cheques &middot; Issued: {formatCurrency(totalIssued)} &middot; To Pay: {formatCurrency(totalToPay)} &middot; Cleared: {formatCurrency(totalCleared)}
           </p>
         </div>
       </div>
@@ -77,9 +80,12 @@ export default async function ChequesPage() {
       {pastDueCheques.length > 0 && (
         <Card className="border-red-200 bg-red-50/30">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base text-red-700">
-              <AlertTriangle size={16} />
-              Past Due ({pastDueCheques.length})
+            <CardTitle className="flex items-center justify-between text-base text-red-700">
+              <span className="flex items-center gap-2">
+                <AlertTriangle size={16} />
+                Past Due ({pastDueCheques.length})
+              </span>
+              <span className="font-bold">{formatCurrency(pastDueTotal)}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
