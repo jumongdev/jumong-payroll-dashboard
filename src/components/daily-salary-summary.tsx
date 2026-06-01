@@ -115,40 +115,40 @@ export default async function DailySalarySummary() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b text-zinc-500">
-                    <th className="text-left py-2 pr-2 font-medium">Employee</th>
-                    <th className="text-left py-2 px-2 font-medium">Shift</th>
-                    <th className="text-center py-2 px-2 font-medium">In</th>
-                    <th className="text-center py-2 px-2 font-medium">Out</th>
-                    <th className="text-center py-2 px-2 font-medium">Raw</th>
-                    <th className="text-center py-2 px-2 font-medium">Paid</th>
-                    <th className="text-right py-2 pl-2 font-medium">Pay</th>
+                  <tr className="border-b text-zinc-400 uppercase tracking-wide">
+                    <th className="text-left py-2 pr-3 font-medium">Employee</th>
+                    <th className="text-center py-2 px-1 font-medium whitespace-nowrap">Shift</th>
+                    <th className="text-center py-2 px-1 font-medium whitespace-nowrap">In</th>
+                    <th className="text-center py-2 px-1 font-medium whitespace-nowrap">Out</th>
+                    <th className="text-center py-2 px-1 font-medium whitespace-nowrap">Raw</th>
+                    <th className="text-center py-2 px-1 font-medium whitespace-nowrap">Paid</th>
+                    <th className="text-right py-2 pl-3 font-medium">Pay</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((r, i) => (
                     <tr key={i} className={cn("border-b last:border-0", r.status === "absent" && "text-zinc-400")}>
-                      <td className="py-2 pr-2">
+                      <td className="py-1.5 pr-3">
                         <div className="flex items-center gap-1.5">
                           {r.status === "done" && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />}
                           {r.status === "working" && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />}
                           {r.status === "absent" && <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 shrink-0" />}
-                          <span className="font-medium truncate max-w-28">{r.name}</span>
+                          <span className="font-medium">{r.name}</span>
                         </div>
                         <span className="text-[10px] text-zinc-400">{r.company}</span>
                       </td>
-                      <td className="py-2 px-2">
+                      <td className="py-1.5 px-1 text-center whitespace-nowrap">
                         {r.shiftStart && r.shiftEnd ? (
-                          <span>{to12Hour(r.shiftStart)}-{to12Hour(r.shiftEnd)}</span>
+                          <span>{to12Hour(r.shiftStart)}&ndash;{to12Hour(r.shiftEnd)}</span>
                         ) : (
                           <span className="text-red-400 text-[10px]">No shift</span>
                         )}
                       </td>
-                      <td className="py-2 px-2 text-center">{r.checkIn ?? "—"}</td>
-                      <td className="py-2 px-2 text-center">{r.checkOut ?? "—"}</td>
-                      <td className="py-2 px-2 text-center">{r.rawHours > 0 ? `${r.rawHours.toFixed(1)}h` : "—"}</td>
+                      <td className="py-1.5 px-1 text-center whitespace-nowrap font-mono">{r.checkIn ?? "—"}</td>
+                      <td className="py-1.5 px-1 text-center whitespace-nowrap font-mono">{r.checkOut ?? "—"}</td>
+                      <td className="py-1.5 px-1 text-center whitespace-nowrap">{r.rawHours > 0 ? `${r.rawHours.toFixed(1)}h` : "—"}</td>
                       <td className={cn(
-                        "py-2 px-2 text-center font-medium",
+                        "py-1.5 px-1 text-center whitespace-nowrap font-medium",
                         r.paidHours > 0 && r.paidHours < r.rawHours ? "text-amber-600" : "",
                         r.paidHours > 0 ? "text-emerald-600" : "",
                         r.missingShift && r.rawHours > 0 ? "text-red-500" : ""
@@ -156,7 +156,7 @@ export default async function DailySalarySummary() {
                         {r.missingShift && r.rawHours > 0 ? "No shift" : r.paidHours > 0 ? `${r.paidHours.toFixed(1)}h` : "—"}
                       </td>
                       <td className={cn(
-                        "py-2 pl-2 text-right font-semibold",
+                        "py-1.5 pl-3 text-right font-semibold whitespace-nowrap",
                         r.status === "done" ? "text-emerald-600" : r.status === "working" ? "text-amber-600" : "text-zinc-400",
                         r.missingShift ? "text-red-500" : ""
                       )}>
