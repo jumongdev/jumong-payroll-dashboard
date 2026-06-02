@@ -28,7 +28,7 @@ export default async function ChequesPage() {
 
   const phNow = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date())
   const todayStart = new Date(`${phNow}T00:00:00+08:00`)
-  const pastDueCheques = cheques.filter((c) => c.status === "issued" && c.dueDate && c.dueDate < todayStart)
+  const pastDueCheques = cheques.filter((c) => c.status === "issued" && c.dueDate && c.dueDate <= todayStart)
   const currentCheques = cheques.filter((c) => !pastDueCheques.includes(c))
   const pastDueTotal = pastDueCheques.reduce((s, c) => s + c.amount, 0)
   const currentIssued = currentCheques.filter((c) => c.status === "issued").reduce((s, c) => s + c.amount, 0)
