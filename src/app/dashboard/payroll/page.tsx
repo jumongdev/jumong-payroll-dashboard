@@ -9,11 +9,10 @@ import { Badge } from "@/components/ui/table"
 import { addDebt, deleteDebt, recomputePayroll } from "@/lib/actions/payroll"
 import PayButton from "@/components/pay-button"
 import ExportButton from "@/components/export-button"
-import PrintButton from "@/components/print-button"
 import PrintSlipsButton from "@/components/print-slips-button"
 import { exportPayrollCSV, exportDebtsCSV } from "@/lib/actions/export"
 import { formatCurrency, formatDate, computePaidHours, getPhilippineWeekRange } from "@/lib/utils"
-import { DollarSign, Clock, ChevronLeft, ChevronRight, Printer } from "lucide-react"
+import { DollarSign, Clock, ChevronLeft, ChevronRight } from "lucide-react"
 
 export default async function PayrollPage({ searchParams }: { searchParams: Promise<{ week?: string }> }) {
   const session = await auth()
@@ -152,50 +151,13 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <PrintButton />
           {entries.length > 0 && <PrintSlipsButton entries={entries} weekLabel={weekLabel} />}
           <ExportButton action={exportPayrollCSV} label="Export Payroll" />
           <ExportButton action={exportDebtsCSV} label="Export Debts" />
         </div>
       </div>
 
-      <style>{`
-        @media print {
-          body * { visibility: hidden; }
-          .print-area, .print-area * { visibility: visible; }
-          .print-area { position: absolute; left: 0; top: 0; width: 80mm; }
-          .no-print { display: none !important; }
-          .print-area { font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.4; }
-          .print-area .p-3 { padding: 4px 0; }
-          .print-area .border { border-bottom: 1px dashed #000; }
-          .print-area .rounded-lg { border: none; }
-          .print-area .bg-white { background: none; }
-          .print-area .flex { display: flex; }
-          .print-area .items-center { align-items: center; }
-          .print-area .justify-between { justify-content: space-between; }
-          .print-area .gap-3 { gap: 6px; }
-          .print-area .text-sm { font-size: 11px; }
-          .print-area .text-xs { font-size: 10px; }
-          .print-area .min-w-0 { min-width: 0; }
-          .print-area .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
-          .print-area .font-medium { font-weight: bold; }
-          .print-area .font-bold { font-weight: bold; }
-          .print-area .text-right { text-align: right; }
-          .print-area .text-emerald-600 { color: #000; }
-          .print-area .text-red-500 { color: #000; }
-          .print-area .w-8, .print-area .h-8, .print-area .rounded-full, .print-area .shrink-0 { display: none; }
-          .print-area .space-y-2 > * + * { margin-top: 3px; }
-          .print-area .hidden { display: block !important; }
-          .print-header { text-align: center; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #000; }
-          .print-header h2 { font-size: 14px; font-weight: bold; margin: 0; letter-spacing: 1px; }
-          .print-header p { font-size: 10px; margin: 3px 0 0; }
-          .print-only { display: block; }
-          @page { margin: 3mm; size: 80mm auto; }
-        }
-        .print-only { display: none; }
-      `}</style>
-
-      <div className="grid gap-6 md:grid-cols-2 no-print">
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -254,7 +216,7 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
       </div>
 
       {debtHistory.length > 0 && (
-        <Card className="no-print">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               Debt History
@@ -297,11 +259,6 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
         </Card>
       )}
 
-      <div className="print-area">
-        <div className="print-header">
-          <h2>PAYROLL SUMMARY</h2>
-          <p>{weekLabel}</p>
-        </div>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -309,7 +266,7 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
               Pay Employees
               {period && entries.some((e: any) => e.status === "pending") && (
                 <form action={async () => { "use server"; await recomputePayroll(period.id) }}>
-                  <Button type="submit" variant="outline" size="sm" className="h-7 text-xs ml-auto no-print">
+                  <Button type="submit" variant="outline" size="sm" className="h-7 text-xs ml-auto">
                     Recompute
                   </Button>
                 </form>
@@ -360,21 +317,11 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
               ))}
             </div>
           )}
-          <div className="print-only" style={{marginTop: 8, paddingTop: 6, borderTop: '1px solid #000', fontSize: 11, fontWeight: 'bold'}}>
-            <div style={{display: 'flex', justifyContent: 'space-between'}}>
-              <span>Total ({entries.length} employees)</span>
-              <span>
-                Gross: {formatCurrency(entries.reduce((s: number, e: any) => s + e.grossPay, 0))} |
-                Net: {formatCurrency(entries.reduce((s: number, e: any) => s + e.netPay, 0))}
-              </span>
-            </div>
-          </div>
         </CardContent>
       </Card>
-      </div>
 
       {allPeriods.length > 0 && (
-        <Card className="no-print">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Clock size={16} />
