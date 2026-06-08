@@ -9,9 +9,10 @@ import { Badge } from "@/components/ui/table"
 import { addDebt, deleteDebt, recomputePayroll } from "@/lib/actions/payroll"
 import PayButton from "@/components/pay-button"
 import ExportButton from "@/components/export-button"
+import PrintButton from "@/components/print-button"
 import { exportPayrollCSV, exportDebtsCSV } from "@/lib/actions/export"
 import { formatCurrency, formatDate, computePaidHours, getPhilippineWeekRange } from "@/lib/utils"
-import { DollarSign, Clock, ChevronLeft, ChevronRight } from "lucide-react"
+import { DollarSign, Clock, ChevronLeft, ChevronRight, Printer } from "lucide-react"
 
 export default async function PayrollPage({ searchParams }: { searchParams: Promise<{ week?: string }> }) {
   const session = await auth()
@@ -150,12 +151,28 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <PrintButton />
           <ExportButton action={exportPayrollCSV} label="Export Payroll" />
           <ExportButton action={exportDebtsCSV} label="Export Debts" />
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          .print-area, .print-area * { visibility: visible; }
+          .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+          .no-print { display: none !important; }
+          .print-area table { border-collapse: collapse; width: 100%; }
+          .print-area th, .print-area td { border: 1px solid #000; padding: 6px 10px; font-size: 12px; text-align: left; }
+          .print-area th { background: #f0f0f0; font-weight: 600; }
+          .print-area .text-right { text-align: right; }
+          .print-area .font-medium { font-weight: 500; }
+          @page { margin: 15mm; }
+        }
+      `}</style>
+
+      <div className="grid gap-6 md:grid-cols-2 no-print">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -214,7 +231,7 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
       </div>
 
       {debtHistory.length > 0 && (
-        <Card>
+        <Card className="no-print">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               Debt History
@@ -257,6 +274,7 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
         </Card>
       )}
 
+      <div className="print-area">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -264,7 +282,7 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
               Pay Employees
               {period && entries.some((e: any) => e.status === "pending") && (
                 <form action={async () => { "use server"; await recomputePayroll(period.id) }}>
-                  <Button type="submit" variant="outline" size="sm" className="h-7 text-xs ml-auto">
+                  <Button type="submit" variant="outline" size="sm" className="h-7 text-xs ml-auto no-print">
                     Recompute
                   </Button>
                 </form>
@@ -317,9 +335,10 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
           )}
         </CardContent>
       </Card>
+      </div>
 
       {allPeriods.length > 0 && (
-        <Card>
+        <Card className="no-print">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Clock size={16} />
