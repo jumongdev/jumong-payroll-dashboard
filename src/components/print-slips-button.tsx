@@ -12,19 +12,19 @@ export default function PrintSlipsButton({ entries, weekLabel }: {
       const debt = e.deductions > 0 ? e.deductions : 0
       const net = Math.max(0, e.grossPay - debt)
       return `
-<div style="page-break-after:always;width:74mm;padding:3mm 0;font-family:'Courier New',monospace;font-size:10px;line-height:1.3;">
-  <div style="text-align:center;border-bottom:1px solid #000;padding-bottom:3px;">
-    <div style="font-size:13px;font-weight:bold;">PAY SLIP</div>
-    <div style="font-size:9px;">${weekLabel}</div>
+<div style="page-break-after:always;width:74mm;padding:2mm 0;font-family:'Courier New',monospace;font-size:12px;line-height:1.4;">
+  <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:4px;">
+    <div style="font-size:16px;font-weight:bold;">PAY SLIP</div>
+    <div style="font-size:11px;margin-top:2px;">${weekLabel}</div>
   </div>
-  <div style="margin:4px 0;font-size:11px;font-weight:bold;">${e.user.fullName}</div>
+  <div style="margin:5px 0;font-size:14px;font-weight:bold;">${e.user.fullName}</div>
   <table style="width:100%;border-collapse:collapse;">
-    <tr><td style="padding:2px 0;">Rate</td><td style="padding:2px 0;text-align:right;">₱${e.rate}/hr</td></tr>
-    <tr><td style="padding:2px 0;">Hours</td><td style="padding:2px 0;text-align:right;">${e.totalHours}h</td></tr>
-    <tr><td style="padding:2px 0;">Gross</td><td style="padding:2px 0;text-align:right;">₱${e.grossPay.toFixed(2)}</td></tr>
-    ${debt > 0 ? `<tr><td style="padding:2px 0;">Deductions</td><td style="padding:2px 0;text-align:right;">-₱${debt.toFixed(2)}</td></tr>` : ''}
+    <tr><td style="padding:3px 0;font-size:12px;">Rate</td><td style="padding:3px 0;text-align:right;font-size:12px;">₱${e.rate}/hr</td></tr>
+    <tr><td style="padding:3px 0;font-size:12px;">Hours</td><td style="padding:3px 0;text-align:right;font-size:12px;">${e.totalHours}h</td></tr>
+    <tr><td style="padding:3px 0;font-size:12px;">Gross</td><td style="padding:3px 0;text-align:right;font-size:12px;">₱${e.grossPay.toFixed(2)}</td></tr>
+    ${debt > 0 ? `<tr><td style="padding:3px 0;font-size:12px;">Deductions</td><td style="padding:3px 0;text-align:right;font-size:12px;">-₱${debt.toFixed(2)}</td></tr>` : ''}
   </table>
-  <div style="border-top:2px solid #000;margin-top:4px;padding-top:4px;text-align:center;font-size:16px;font-weight:bold;">
+  <div style="border-top:2px solid #000;margin-top:5px;padding-top:5px;text-align:center;font-size:18px;font-weight:bold;">
     ₱${net.toFixed(2)}
   </div>
 </div>`
@@ -36,7 +36,7 @@ export default function PrintSlipsButton({ entries, weekLabel }: {
 <html><head><title>Pay Slips</title>
 <meta charset="utf-8">
 <style>
-  @page { margin: 0; size: 80mm 60mm; }
+  @page { margin: 0; size: 80mm 75mm; }
   body { margin: 0; padding: 2mm; }
   @media print { body { margin: 0; padding: 2mm; } }
 </style>
