@@ -161,15 +161,34 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
         @media print {
           body * { visibility: hidden; }
           .print-area, .print-area * { visibility: visible; }
-          .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+          .print-area { position: absolute; left: 0; top: 0; width: 80mm; }
           .no-print { display: none !important; }
-          .print-area table { border-collapse: collapse; width: 100%; }
-          .print-area th, .print-area td { border: 1px solid #000; padding: 6px 10px; font-size: 12px; text-align: left; }
-          .print-area th { background: #f0f0f0; font-weight: 600; }
+          .print-area { font-family: 'Courier New', monospace; font-size: 9px; line-height: 1.3; }
+          .print-area .p-3 { padding: 3px 0; }
+          .print-area .border { border-bottom: 1px dashed #000; }
+          .print-area .rounded-lg { border: none; }
+          .print-area .bg-white { background: none; }
+          .print-area .flex { display: flex; }
+          .print-area .items-center { align-items: center; }
+          .print-area .justify-between { justify-content: space-between; }
+          .print-area .gap-3 { gap: 4px; }
+          .print-area .text-sm { font-size: 9px; }
+          .print-area .text-xs { font-size: 8px; }
+          .print-area .min-w-0 { min-width: 0; }
+          .print-area .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+          .print-area .font-medium { font-weight: bold; }
+          .print-area .font-bold { font-weight: bold; }
           .print-area .text-right { text-align: right; }
-          .print-area .font-medium { font-weight: 500; }
-          @page { margin: 15mm; }
+          .print-area .w-8, .print-area .h-8, .print-area .rounded-full, .print-area .shrink-0 { display: none; }
+          .print-area .space-y-2 > * + * { margin-top: 2px; }
+          .print-area .hidden { display: block !important; }
+          .print-header { text-align: center; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px solid #000; }
+          .print-header h2 { font-size: 12px; font-weight: bold; margin: 0; }
+          .print-header p { font-size: 8px; margin: 2px 0 0; }
+          .print-only { display: block; }
+          @page { margin: 3mm; size: 80mm auto; }
         }
+        .print-only { display: none; }
       `}</style>
 
       <div className="grid gap-6 md:grid-cols-2 no-print">
@@ -275,6 +294,10 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
       )}
 
       <div className="print-area">
+        <div className="print-header">
+          <h2>PAYROLL SUMMARY</h2>
+          <p>{weekLabel}</p>
+        </div>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -333,6 +356,15 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
               ))}
             </div>
           )}
+          <div className="print-only" style={{marginTop: 8, paddingTop: 4, borderTop: '1px solid #000', fontSize: 9, fontWeight: 'bold'}}>
+            <div style={{display: 'flex', justifyContent: 'space-between'}}>
+              <span>Total ({entries.length} employees)</span>
+              <span>
+                Gross: {formatCurrency(entries.reduce((s: number, e: any) => s + e.grossPay, 0))} |
+                Net: {formatCurrency(entries.reduce((s: number, e: any) => s + e.netPay, 0))}
+              </span>
+            </div>
+          </div>
         </CardContent>
       </Card>
       </div>
