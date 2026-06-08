@@ -262,16 +262,14 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
             <CardTitle className="flex items-center gap-2 text-base">
               <DollarSign size={16} />
               Pay Employees
-            </CardTitle>
-            <div className="flex items-center gap-2 mt-1">
               {period && entries.some((e: any) => e.status === "pending") && (
                 <form action={async () => { "use server"; await recomputePayroll(period.id) }}>
-                  <Button type="submit" variant="outline" size="sm" className="h-7 text-xs">
+                  <Button type="submit" variant="outline" size="sm" className="h-7 text-xs ml-auto">
                     Recompute
                   </Button>
                 </form>
               )}
-            </div>
+            </CardTitle>
           </CardHeader>
         <CardContent>
           {entries.length === 0 ? (
