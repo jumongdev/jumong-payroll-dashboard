@@ -31,6 +31,38 @@ export async function createCheque(formData: FormData) {
   revalidatePath("/dashboard/cheques")
 }
 
+export async function updateCheque(
+  id: string,
+  data: {
+    chequeNo: string
+    payee: string
+    amount: number
+    bank: string
+    issueDate: string
+    dueDate: string | null
+    voucherNo: string | null
+    notes: string | null
+  },
+) {
+  if (!data.chequeNo || !data.payee || data.amount <= 0 || !data.issueDate) return
+
+  await db.cheque.update({
+    where: { id },
+    data: {
+      chequeNo: data.chequeNo,
+      payee: data.payee,
+      amount: data.amount,
+      bank: data.bank || "—",
+      issueDate: new Date(`${data.issueDate}T00:00:00+08:00`),
+      dueDate: data.dueDate ? new Date(`${data.dueDate}T00:00:00+08:00`) : null,
+      voucherNo: data.voucherNo,
+      notes: data.notes,
+    },
+  })
+
+  revalidatePath("/dashboard/cheques")
+}
+
 export async function updateChequeStatus(id: string, status: string) {
   const data: Record<string, any> = { status }
   if (status === "cleared") {

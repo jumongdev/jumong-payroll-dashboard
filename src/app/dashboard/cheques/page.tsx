@@ -10,6 +10,7 @@ import { addSupplier } from "@/lib/actions/suppliers"
 import { addBankAccount } from "@/lib/actions/bank-accounts"
 import { DeleteSupplierButton, DeleteBankAccountButton } from "@/components/delete-confirm-button"
 import { EditSupplierButton } from "@/components/edit-supplier-button"
+import { EditChequeButton } from "@/components/edit-cheque-button"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { CreditCard, Plus, Check, X, Trash2, Building, Landmark, AlertTriangle } from "lucide-react"
 
@@ -115,6 +116,17 @@ export default async function ChequesPage() {
                       <td className="py-1.5 px-2 text-xs font-medium text-red-600">{formatDate(c.dueDate!)}</td>
                       <td className="py-1.5 pl-2 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <EditChequeButton
+                            id={c.id}
+                            chequeNo={c.chequeNo}
+                            payee={c.payee}
+                            amount={c.amount}
+                            bank={c.bank}
+                            issueDate={c.issueDate}
+                            dueDate={c.dueDate}
+                            voucherNo={c.voucherNo}
+                            notes={c.notes}
+                          />
                           <form action={async () => { "use server"; await updateChequeStatus(c.id, "cleared") }}>
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-600" title="Mark Cleared">
                               <Check size={14} />
@@ -401,6 +413,17 @@ export default async function ChequesPage() {
                               </form>
                             </>
                           )}
+                          <EditChequeButton
+                            id={c.id}
+                            chequeNo={c.chequeNo}
+                            payee={c.payee}
+                            amount={c.amount}
+                            bank={c.bank}
+                            issueDate={c.issueDate}
+                            dueDate={c.dueDate}
+                            voucherNo={c.voucherNo}
+                            notes={c.notes}
+                          />
                           <form action={async () => { "use server"; await deleteCheque(c.id) }}>
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600" title="Delete">
                               <Trash2 size={12} />

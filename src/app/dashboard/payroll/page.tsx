@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/table"
-import { addDebt, deleteDebt } from "@/lib/actions/payroll"
+import { addDebt, deleteDebt, recomputePayroll } from "@/lib/actions/payroll"
 import PayButton from "@/components/pay-button"
 import ExportButton from "@/components/export-button"
 import { exportPayrollCSV, exportDebtsCSV } from "@/lib/actions/export"
@@ -25,7 +25,7 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
   weekStart.setUTCDate(currentMonday.getUTCDate() + weekOffset * 7)
   const weekEnd = new Date(currentSunday)
   weekEnd.setUTCDate(currentSunday.getUTCDate() + weekOffset * 7)
-  const weekLabel = `${weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+  const weekLabel = `${new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Manila", month: "short", day: "numeric" }).format(weekStart)} - ${new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Manila", month: "short", day: "numeric" }).format(weekEnd)}`
 
   let period = await db.payrollPeriod.findFirst({
     where: { weekStart, weekEnd },
@@ -257,13 +257,22 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <DollarSign size={16} />
-            Pay Employees
-          </CardTitle>
-        </CardHeader>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <DollarSign size={16} />
+              Pay Employees
+            </CardTitle>
+            <div className="flex items-center gap-2 mt-1">
+              {period && entries.some((e: any) => e.status === "pending") && (
+                <form action={async () => { "use server"; await recomputePayroll(period.id) }}>
+                  <Button type="submit" variant="outline" size="sm" className="h-7 text-xs">
+                    Recompute
+                  </Button>
+                </form>
+              )}
+            </div>
+          </CardHeader>
         <CardContent>
           {entries.length === 0 ? (
             <p className="text-sm text-zinc-500 py-4 text-center">No hours or debts recorded this week.</p>

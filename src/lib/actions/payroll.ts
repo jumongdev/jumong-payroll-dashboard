@@ -36,6 +36,83 @@ export async function deleteDebt(id: string) {
   revalidatePath("/dashboard/payroll")
 }
 
+export async function recomputePayroll(periodId: string) {
+  const period = await db.payrollPeriod.findUnique({ where: { id: periodId } })
+  if (!period) return
+
+  const weekStart = period.weekStart
+  const weekEnd = period.weekEnd
+
+  await db.payrollEntry.deleteMany({
+    where: { payrollPeriodId: periodId, status: "pending" },
+  })
+
+  const employees = await db.user.findMany({
+    where: { role: "employee" },
+    select: { id: true, rate: true },
+  })
+
+  const allAttendances = await db.attendance.findMany({
+    where: {
+      userId: { in: employees.map((e) => e.id) },
+      date: { gte: weekStart, lte: weekEnd },
+      checkIn: { not: null },
+      checkOut: { not: null },
+      status: { not: "absent" },
+    },
+  })
+
+  const allSchedules = await db.schedule.findMany({
+    where: {
+      userId: { in: employees.map((e) => e.id) },
+      date: { gte: weekStart, lte: weekEnd },
+    },
+    include: { shift: { select: { startTime: true, endTime: true } }, company: { select: { earlyInPaid: true, lateOutPaid: true } } },
+  })
+
+  const debts = await db.employeeDebt.findMany({
+    where: { userId: { in: employees.map((e) => e.id) }, remaining: { gt: 0 } },
+  })
+
+  for (const emp of employees) {
+    const empAttendances = allAttendances.filter((a) => a.userId === emp.id)
+    const empSchedules = allSchedules.filter((s) => s.userId === emp.id)
+    const totalHours = empAttendances.reduce((sum, a) => {
+      const dateStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(a.date)
+      const sched = empSchedules.find(
+        (s) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(s.date) === dateStr
+      )
+      if (sched?.shift?.endTime) {
+        return sum + computePaidHours(a.checkIn!, a.checkOut!, sched.shift.startTime, sched.shift.endTime, dateStr, sched.company.earlyInPaid, sched.company.lateOutPaid)
+      }
+      const diff = (a.checkOut!.getTime() - a.checkIn!.getTime()) / 3600000
+      return sum + diff
+    }, 0)
+
+    const empDebts = debts.filter((d) => d.userId === emp.id)
+    const totalDebt = empDebts.reduce((sum, d) => sum + d.remaining, 0)
+
+    if (totalHours > 0 || totalDebt > 0) {
+      const grossPay = totalHours * (emp.rate || 0)
+      const netPay = grossPay
+
+      await db.payrollEntry.create({
+        data: {
+          payrollPeriodId: periodId,
+          userId: emp.id,
+          totalHours: Math.round(totalHours * 100) / 100,
+          rate: emp.rate || 0,
+          grossPay: Math.round(grossPay * 100) / 100,
+          deductions: Math.round(totalDebt * 100) / 100,
+          netPay: Math.round(netPay * 100) / 100,
+        },
+      })
+    }
+  }
+
+  revalidatePath("/dashboard/payroll")
+}
+
 export async function computePayroll(formData: FormData) {
   const weekStart = formData.get("weekStart") as string
   const weekEnd = formData.get("weekEnd") as string
