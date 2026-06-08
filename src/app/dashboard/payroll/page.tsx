@@ -10,6 +10,7 @@ import { addDebt, deleteDebt, recomputePayroll } from "@/lib/actions/payroll"
 import PayButton from "@/components/pay-button"
 import ExportButton from "@/components/export-button"
 import PrintButton from "@/components/print-button"
+import PrintSlipsButton from "@/components/print-slips-button"
 import { exportPayrollCSV, exportDebtsCSV } from "@/lib/actions/export"
 import { formatCurrency, formatDate, computePaidHours, getPhilippineWeekRange } from "@/lib/utils"
 import { DollarSign, Clock, ChevronLeft, ChevronRight, Printer } from "lucide-react"
@@ -152,6 +153,7 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
         </div>
         <div className="flex items-center gap-2">
           <PrintButton />
+          {entries.length > 0 && <PrintSlipsButton entries={entries} weekLabel={weekLabel} />}
           <ExportButton action={exportPayrollCSV} label="Export Payroll" />
           <ExportButton action={exportDebtsCSV} label="Export Debts" />
         </div>
