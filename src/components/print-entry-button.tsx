@@ -14,19 +14,19 @@ export default function PrintEntryButton({ entry, weekLabel }: { entry: any; wee
 <html><head><title>${entry.user.fullName} - Payslip</title>
 <meta charset="utf-8">
 <style>
+  @page { margin: 0; size: 80mm 70mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Courier New', monospace; font-size: 12px; color: #000; padding: 20px; }
-  h1 { font-size: 18px; text-align: center; margin-bottom: 4px; }
-  .subtitle { text-align: center; font-size: 13px; margin-bottom: 20px; }
-  .details { margin-bottom: 16px; }
-  .details p { padding: 2px 0; }
+  body { font-family: 'Courier New', monospace; font-size: 10px; color: #000; padding: 3mm; width: 80mm; }
+  h1 { font-size: 14px; text-align: center; margin-bottom: 2px; }
+  .subtitle { text-align: center; font-size: 10px; margin-bottom: 8px; }
+  .details { margin-bottom: 8px; text-align: center; }
+  .details p { padding: 1px 0; }
   table { width: 100%; border-collapse: collapse; }
-  th { border-bottom: 2px solid #000; padding: 6px 4px; text-align: left; font-size: 11px; }
-  td { border-bottom: 1px solid #ccc; padding: 4px; }
+  th { border-bottom: 1px solid #000; padding: 3px 2px; text-align: left; font-size: 9px; }
+  td { padding: 2px; }
   .amt { text-align: right; font-weight: bold; }
-  .total-row td { border-top: 2px solid #000; font-weight: bold; padding-top: 6px; font-size: 14px; }
-  .footer { text-align: center; margin-top: 30px; font-size: 11px; border-top: 1px solid #ccc; padding-top: 12px; }
-  @media print { body { padding: 10px; } }
+  .total-row td { border-top: 1px solid #000; font-weight: bold; padding-top: 3px; font-size: 11px; }
+  .footer { text-align: center; margin-top: 8px; font-size: 8px; border-top: 1px solid #ccc; padding-top: 6px; }
 </style>
 </head><body>
   <h1>JumongDev Payroll</h1>
