@@ -14,7 +14,7 @@ export default function PrintEntryButton({ entry, weekLabel }: { entry: any; wee
 <html><head><title>${entry.user.fullName} - Payslip</title>
 <meta charset="utf-8">
 <style>
-  @page { margin: 0; size: 80mm 70mm; }
+  @page { margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Courier New', monospace; font-size: 10px; color: #000; padding: 3mm; width: 80mm; }
   h1 { font-size: 14px; text-align: center; margin-bottom: 2px; }
@@ -57,10 +57,10 @@ export default function PrintEntryButton({ entry, weekLabel }: { entry: any; wee
     <p>Status: ${entry.status.toUpperCase()} &middot; Printed ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
   </div>
 
-  <script>window.onload=function(){setTimeout(function(){window.print()},300)}</script>
 </body></html>
 `)
     win.document.close()
+    setTimeout(() => { win.focus(); win.print() }, 500)
   }
 
   return (

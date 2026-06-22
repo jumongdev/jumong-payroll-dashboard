@@ -35,7 +35,7 @@ export default async function PrintPayroll({ searchParams }: { searchParams: Pro
       <head>
         <title>Payroll Summary - {weekLabel}</title>
         <style>{`
-          @page { margin: 0; size: 80mm 70mm; }
+          @page { margin: 0; }
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: 'Courier New', monospace; font-size: 9px; color: #000; padding: 3mm; width: 80mm; }
           h1 { font-size: 12px; text-align: center; margin-bottom: 2px; }
