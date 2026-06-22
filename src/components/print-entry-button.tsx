@@ -50,13 +50,24 @@ export default function PrintEntryButton({ entry, weekLabel }: { entry: any; wee
   <div class="footer">
     <p>Status: ${entry.status.toUpperCase()} &middot; Printed ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
   </div>
-  <script>window.onload=function(){setTimeout(function(){window.focus();window.print()},500)}<\/script>
 </body></html>`
 
-    const blob = new Blob([html], { type: "text/html" })
-    const url = URL.createObjectURL(blob)
-    window.open(url, "_blank")
-    setTimeout(() => URL.revokeObjectURL(url), 10000)
+    const iframe = document.createElement("iframe")
+    iframe.style.position = "fixed"
+    iframe.style.right = "-9999px"
+    iframe.style.top = "0"
+    iframe.style.width = "0"
+    iframe.style.height = "0"
+    iframe.style.border = "none"
+    document.body.appendChild(iframe)
+    const doc = iframe.contentDocument || iframe.contentWindow.document
+    doc.open()
+    doc.write(html)
+    doc.close()
+    setTimeout(() => {
+      iframe.contentWindow.focus()
+      iframe.contentWindow.print()
+    }, 300)
   }
 
   return (
