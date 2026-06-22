@@ -8,15 +8,12 @@ export default function PrintEntryButton({ entry, weekLabel }: { entry: any; wee
     const debt = entry.deductions > 0 ? entry.deductions : 0
     const net = Math.max(0, entry.grossPay - debt)
 
-    const win = window.open("", "_blank")
-    if (!win) return
-    win.document.write(`
-<html><head><title>${entry.user.fullName} - Payslip</title>
+    const html = `<html><head><title>${entry.user.fullName} - Payslip</title>
 <meta charset="utf-8">
 <style>
   @page { margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Courier New', monospace; font-size: 10px; color: #000; padding: 3mm; width: 80mm; }
+  body { font-family: 'Courier New', monospace; font-size: 10px; color: #000; padding: 3mm; }
   h1 { font-size: 14px; text-align: center; margin-bottom: 2px; }
   .subtitle { text-align: center; font-size: 10px; margin-bottom: 8px; }
   .details { margin-bottom: 8px; text-align: center; }
@@ -31,12 +28,10 @@ export default function PrintEntryButton({ entry, weekLabel }: { entry: any; wee
 </head><body>
   <h1>JumongDev Payroll</h1>
   <div class="subtitle">${weekLabel}</div>
-
   <div class="details">
     <p><strong>${entry.user.fullName}</strong></p>
     <p>${entry.user.designation || "Employee"} &middot; ${entry.totalHours}h worked</p>
   </div>
-
   <table>
     <thead>
       <tr>
@@ -52,15 +47,16 @@ export default function PrintEntryButton({ entry, weekLabel }: { entry: any; wee
       <tr class="total-row"><td>NET PAY</td><td class="amt">₱${net.toFixed(2)}</td></tr>
     </tbody>
   </table>
-
   <div class="footer">
     <p>Status: ${entry.status.toUpperCase()} &middot; Printed ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
   </div>
+  <script>window.onload=function(){setTimeout(function(){window.focus();window.print()},500)}<\/script>
+</body></html>`
 
-</body></html>
-`)
-    win.document.close()
-    setTimeout(() => { win.focus(); win.print() }, 500)
+    const blob = new Blob([html], { type: "text/html" })
+    const url = URL.createObjectURL(blob)
+    window.open(url, "_blank")
+    setTimeout(() => URL.revokeObjectURL(url), 10000)
   }
 
   return (
