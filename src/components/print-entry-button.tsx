@@ -1,0 +1,71 @@
+"use client"
+
+import { Button } from "@/components/ui/button"
+import { Printer } from "lucide-react"
+
+export default function PrintEntryButton({ entry, weekLabel }: { entry: any; weekLabel: string }) {
+  function printEntry() {
+    const debt = entry.deductions > 0 ? entry.deductions : 0
+    const net = Math.max(0, entry.grossPay - debt)
+
+    const win = window.open("", "_blank")
+    if (!win) return
+    win.document.write(`
+<html><head><title>${entry.user.fullName} - Payslip</title>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Courier New', monospace; font-size: 12px; color: #000; padding: 20px; }
+  h1 { font-size: 18px; text-align: center; margin-bottom: 4px; }
+  .subtitle { text-align: center; font-size: 13px; margin-bottom: 20px; }
+  .details { margin-bottom: 16px; }
+  .details p { padding: 2px 0; }
+  table { width: 100%; border-collapse: collapse; }
+  th { border-bottom: 2px solid #000; padding: 6px 4px; text-align: left; font-size: 11px; }
+  td { border-bottom: 1px solid #ccc; padding: 4px; }
+  .amt { text-align: right; font-weight: bold; }
+  .total-row td { border-top: 2px solid #000; font-weight: bold; padding-top: 6px; font-size: 14px; }
+  .footer { text-align: center; margin-top: 30px; font-size: 11px; border-top: 1px solid #ccc; padding-top: 12px; }
+  @media print { body { padding: 10px; } }
+</style>
+</head><body>
+  <h1>JumongDev Payroll</h1>
+  <div class="subtitle">${weekLabel}</div>
+
+  <div class="details">
+    <p><strong>${entry.user.fullName}</strong></p>
+    <p>${entry.user.designation || "Employee"} &middot; ${entry.totalHours}h worked</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th class="amt">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Hourly Rate</td><td class="amt">₱${entry.rate}/hr</td></tr>
+      <tr><td>Total Hours</td><td class="amt">${entry.totalHours}h</td></tr>
+      <tr><td>Gross Pay</td><td class="amt">₱${entry.grossPay.toFixed(2)}</td></tr>
+      ${debt > 0 ? `<tr><td>Deductions</td><td class="amt" style="color:#dc2626;">-₱${debt.toFixed(2)}</td></tr>` : ""}
+      <tr class="total-row"><td>NET PAY</td><td class="amt">₱${net.toFixed(2)}</td></tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <p>Status: ${entry.status.toUpperCase()} &middot; Printed ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+  </div>
+
+  <script>window.onload=function(){setTimeout(function(){window.print()},300)}</script>
+</body></html>
+`)
+    win.document.close()
+  }
+
+  return (
+    <Button variant="outline" size="sm" onClick={printEntry} className="h-8 text-xs">
+      <Printer size={12} className="mr-1" /> Print
+    </Button>
+  )
+}

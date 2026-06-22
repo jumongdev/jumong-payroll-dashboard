@@ -6,13 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/table"
-import { addDebt, deleteDebt, recomputePayroll } from "@/lib/actions/payroll"
+import { addDebt, recomputePayroll } from "@/lib/actions/payroll"
 import PayButton from "@/components/pay-button"
-import ExportButton from "@/components/export-button"
-import PrintSlipsButton from "@/components/print-slips-button"
-import { exportPayrollCSV, exportDebtsCSV } from "@/lib/actions/export"
+import PrintEntryButton from "@/components/print-entry-button"
 import { formatCurrency, formatDate, computePaidHours, getPhilippineWeekRange } from "@/lib/utils"
-import { DollarSign, Clock, ChevronLeft, ChevronRight } from "lucide-react"
+import { DollarSign, Clock, ChevronLeft, ChevronRight, Printer } from "lucide-react"
+import Link from "next/link"
 
 export default async function PayrollPage({ searchParams }: { searchParams: Promise<{ week?: string }> }) {
   const session = await auth()
@@ -151,9 +150,14 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {entries.length > 0 && <PrintSlipsButton entries={entries} weekLabel={weekLabel} />}
-          <ExportButton action={exportPayrollCSV} label="Export Payroll" />
-          <ExportButton action={exportDebtsCSV} label="Export Debts" />
+          {entries.length > 0 && (
+            <Link href={`/dashboard/payroll/print?week=${weekOffset}`} target="_blank">
+              <Button variant="outline" size="sm" className="h-9 text-xs">
+                <Printer size={12} className="mr-1" />
+                Print Summary
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -303,7 +307,10 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
                       <p className="font-bold text-emerald-600 text-sm">{formatCurrency(e.netPay)}</p>
                     </div>
                     {e.status === "paid" ? (
-                      <Badge variant="success">Paid</Badge>
+                      <>
+                        <Badge variant="success">Paid</Badge>
+                        <PrintEntryButton entry={e} weekLabel={weekLabel} />
+                      </>
                     ) : (
                       <PayButton
                         entryId={e.id}
@@ -332,27 +339,30 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
             <div className="space-y-2">
               {allPeriods.map((p) => {
                 const paid = p.entries.filter((e) => e.status === "paid")
+                const weekOffset = Math.round((p.weekStart.getTime() - new Date(getPhilippineWeekRange().monday).getTime()) / (7 * 86400000))
                 return (
-                  <div key={p.id} className="flex items-center justify-between p-3 rounded-lg border">
-                    <div>
-                      <p className="font-medium text-sm">
-                        {formatDate(p.weekStart)} - {formatDate(new Date(new Date(p.weekStart).getTime() + 6 * 86400000))}
-                      </p>
-                      <p className="text-xs text-zinc-500">{p.entries.length} employees</p>
+                  <Link key={p.id} href={`/dashboard/payroll?week=${weekOffset}`} className="block">
+                    <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-zinc-50 transition-colors">
+                      <div>
+                        <p className="font-medium text-sm">
+                          {formatDate(p.weekStart)} - {formatDate(new Date(new Date(p.weekStart).getTime() + 6 * 86400000))}
+                        </p>
+                        <p className="text-xs text-zinc-500">{p.entries.length} employees</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <p className="text-sm font-medium">
+                          {paid.length === p.entries.length && p.entries.length > 0 ? (
+                            <span className="text-emerald-600">{formatCurrency(paid.reduce((s, e) => s + e.netPay, 0))} Paid</span>
+                          ) : (
+                            <span className="text-amber-600">Open</span>
+                          )}
+                        </p>
+                        <Badge variant={paid.length === p.entries.length && p.entries.length > 0 ? "success" : "warning"}>
+                          {paid.length === p.entries.length && p.entries.length > 0 ? "Paid" : "Open"}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <p className="text-sm font-medium">
-                        {paid.length === p.entries.length && p.entries.length > 0 ? (
-                          <span className="text-emerald-600">{formatCurrency(paid.reduce((s, e) => s + e.netPay, 0))} Paid</span>
-                        ) : (
-                          <span className="text-amber-600">Open</span>
-                        )}
-                      </p>
-                      <Badge variant={paid.length === p.entries.length && p.entries.length > 0 ? "success" : "warning"}>
-                        {paid.length === p.entries.length && p.entries.length > 0 ? "Paid" : "Open"}
-                      </Badge>
-                    </div>
-                  </div>
+                  </Link>
                 )
               })}
             </div>
