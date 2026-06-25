@@ -36,6 +36,7 @@ export default async function ChequesPage() {
   const totalToPay = pastDueTotal + currentIssued
   const currentIssuedCheques = currentCheques.filter((c) => c.status !== "cleared")
   const clearedCheques = currentCheques.filter((c) => c.status === "cleared")
+  const bouncedCheques = cheques.filter((c) => c.status === "bounced" || c.status === "cancelled")
 
   return (
     <div className="space-y-6">
@@ -48,7 +49,7 @@ export default async function ChequesPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="pb-1">
             <CardTitle className="text-xs text-zinc-500 uppercase">Total Issued</CardTitle>
@@ -65,17 +66,6 @@ export default async function ChequesPage() {
           <CardContent>
             <p className="text-xl font-bold text-emerald-700">{formatCurrency(totalCleared)}</p>
             <p className="text-xs text-zinc-400">{cheques.filter((c) => c.status === "cleared").length} cheques</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs text-zinc-500 uppercase">Bounced / Cancelled</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-bold text-red-700">
-              {formatCurrency(cheques.filter((c) => c.status === "bounced" || c.status === "cancelled").reduce((s, c) => s + c.amount, 0))}
-            </p>
-            <p className="text-xs text-zinc-400">{cheques.filter((c) => c.status === "bounced" || c.status === "cancelled").length} cheques</p>
           </CardContent>
         </Card>
       </div>
@@ -400,6 +390,45 @@ export default async function ChequesPage() {
           )}
         </CardContent>
       </Card>
+
+      {bouncedCheques.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base text-red-700">
+              <X size={16} />
+              Bounced / Cancelled ({bouncedCheques.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-zinc-500 text-xs">
+                    <th className="text-left py-2 pr-2 font-medium">Cheque No.</th>
+                    <th className="text-left py-2 px-2 font-medium">Payee</th>
+                    <th className="text-right py-2 px-2 font-medium">Amount</th>
+                    <th className="text-left py-2 px-2 font-medium">Bank</th>
+                    <th className="text-left py-2 px-2 font-medium">Issued</th>
+                    <th className="text-left py-2 px-2 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bouncedCheques.map((c) => (
+                    <tr key={c.id} className="border-b last:border-0 text-red-600">
+                      <td className="py-2 pr-2 font-mono text-xs">{c.chequeNo}</td>
+                      <td className="py-2 px-2">{c.payee}</td>
+                      <td className="py-2 px-2 text-right">{formatCurrency(c.amount)}</td>
+                      <td className="py-2 px-2 text-xs">{c.bank}</td>
+                      <td className="py-2 px-2 text-xs">{formatDate(c.issueDate)}</td>
+                      <td className="py-2 px-2 text-xs capitalize">{c.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {clearedCheques.length > 0 && (
         <Card>
