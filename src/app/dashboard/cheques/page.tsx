@@ -314,45 +314,6 @@ export default async function ChequesPage() {
         </Card>
       </div>
 
-      {clearedCheques.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base text-emerald-700">
-              <Check size={16} />
-              Cleared ({clearedCheques.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-zinc-500 text-xs">
-                    <th className="text-left py-2 pr-2 font-medium">Cheque No.</th>
-                    <th className="text-left py-2 px-2 font-medium">Payee</th>
-                    <th className="text-right py-2 px-2 font-medium">Amount</th>
-                    <th className="text-left py-2 px-2 font-medium">Bank</th>
-                    <th className="text-left py-2 px-2 font-medium">Issued</th>
-                    <th className="text-left py-2 px-2 font-medium">Cleared</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {clearedCheques.map((c) => (
-                    <tr key={c.id} className="border-b last:border-0 text-zinc-500">
-                      <td className="py-2 pr-2 font-mono text-xs">{c.chequeNo}</td>
-                      <td className="py-2 px-2">{c.payee}</td>
-                      <td className="py-2 px-2 text-right">{formatCurrency(c.amount)}</td>
-                      <td className="py-2 px-2 text-xs">{c.bank}</td>
-                      <td className="py-2 px-2 text-xs">{formatDate(c.issueDate)}</td>
-                      <td className="py-2 px-2 text-xs">{c.clearDate ? formatDate(c.clearDate) : "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
@@ -439,6 +400,45 @@ export default async function ChequesPage() {
           )}
         </CardContent>
       </Card>
+
+      {clearedCheques.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base text-emerald-700">
+              <Check size={16} />
+              Cleared ({clearedCheques.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-zinc-500 text-xs">
+                    <th className="text-left py-2 pr-2 font-medium">Cheque No.</th>
+                    <th className="text-left py-2 px-2 font-medium">Payee</th>
+                    <th className="text-right py-2 px-2 font-medium">Amount</th>
+                    <th className="text-left py-2 px-2 font-medium">Bank</th>
+                    <th className="text-left py-2 px-2 font-medium">Issued</th>
+                    <th className="text-left py-2 px-2 font-medium">Cleared</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clearedCheques.map((c) => (
+                    <tr key={c.id} className="border-b last:border-0 text-zinc-500">
+                      <td className="py-2 pr-2 font-mono text-xs">{c.chequeNo}</td>
+                      <td className="py-2 px-2">{c.payee}</td>
+                      <td className="py-2 px-2 text-right">{formatCurrency(c.amount)}</td>
+                      <td className="py-2 px-2 text-xs">{c.bank}</td>
+                      <td className="py-2 px-2 text-xs">{formatDate(c.issueDate)}</td>
+                      <td className="py-2 px-2 text-xs">{c.clearDate ? formatDate(c.clearDate) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
