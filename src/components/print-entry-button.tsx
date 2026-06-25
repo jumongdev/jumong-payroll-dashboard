@@ -60,13 +60,15 @@ export default function PrintEntryButton({ entry, weekLabel }: { entry: any; wee
     iframe.style.height = "0"
     iframe.style.border = "none"
     document.body.appendChild(iframe)
-    const doc = iframe.contentDocument || iframe.contentWindow.document
+    const win = iframe.contentWindow
+    const doc = iframe.contentDocument || (win && win.document)
+    if (!doc || !win) return
     doc.open()
     doc.write(html)
     doc.close()
     setTimeout(() => {
-      iframe.contentWindow.focus()
-      iframe.contentWindow.print()
+      win.focus()
+      win.print()
     }, 300)
   }
 
