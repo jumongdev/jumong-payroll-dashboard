@@ -103,7 +103,7 @@ export default function Sidebar({ user }: { user?: { name?: string | null; email
                 <span className="inline-block mt-1.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
                   ADMIN
                 </span>
-                <span className="text-[10px] text-zinc-400 ml-1.5">v0.1.1</span>
+                <span className="text-xs text-zinc-400 ml-1.5">v0.1.1</span>
               </>
             )}
           </div>
