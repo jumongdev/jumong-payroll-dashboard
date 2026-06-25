@@ -180,16 +180,18 @@ export default async function ChequesPage() {
               <label className="block text-xs font-medium text-zinc-700 mb-1">Amount</label>
               <Input name="amount" type="number" step="0.01" required placeholder="0.00" className="h-9 text-sm" />
             </div>
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-zinc-700 mb-1">Issue Date</label>
-                <Input name="issueDate" type="date" required className="h-9 text-sm" />
+            <div>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-zinc-700 mb-1">Issue Date</label>
+                  <Input name="issueDate" type="date" required className="h-9 text-sm" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-zinc-700 mb-1">Due Date</label>
+                  <Input name="dueDate" type="date" className="h-9 text-sm" />
+                </div>
               </div>
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-zinc-700 mb-1">Due Date</label>
-                <Input name="dueDate" type="date" className="h-9 text-sm" />
-              </div>
-              <Button type="submit" size="sm" className="h-9 shrink-0">
+              <Button type="submit" size="sm" className="h-9 w-full mt-2">
                 <Plus size={14} className="mr-1" /> Issue
               </Button>
             </div>
